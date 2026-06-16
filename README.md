@@ -76,9 +76,23 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 ---
 
-## 3. 関連ドキュメント
+## 3. 学習の進め方
+
+セットアップが完了したら、次は **RAG 学習企画の進め方** を確認してください。
+Phase ごとの Issue の進め方、bolt の切り方、taskLog、PR 作成・週次レビュー、
+進捗管理の流れは以下にまとめています。
+
+- [reference/LEARN_FLOW.md](reference/LEARN_FLOW.md)
+
+`reference/ROAD_MAP.md` が「何を作っていくか（Phase の地図）」だとすれば、
+`LEARN_FLOW.md` は「どう進めていくか（運用ルール）」を扱うドキュメントです。
+
+---
+
+## 4. 関連ドキュメント
 
 - [reference/SETUP_GUIDE.md](reference/SETUP_GUIDE.md) — Docker 手打ちコマンドでのセットアップ手順 / トラブルシュート
+- [reference/LEARN_FLOW.md](reference/LEARN_FLOW.md) — RAG 学習企画の進め方（Issue / bolt / taskLog / PR レビュー / 進捗管理）
 - [reference/ROAD_MAP.md](reference/ROAD_MAP.md) — Phase 0-1 〜 Phase 8 の学習ロードマップ
 - [reference/ISSUES.md](reference/ISSUES.md) — 各 Phase の Issue 原稿
 - [terraform/main.tf](terraform/main.tf) — AWS 想定構成（コメント中心）
@@ -87,7 +101,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 ---
 
-## 4. 使用技術スタック
+## 5. 使用技術スタック
 
 
 | 区分        | 技術                                            |
@@ -104,7 +118,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 ---
 
-## 5. ディレクトリ構成
+## 6. ディレクトリ構成
 
 ```
 backend/
@@ -164,12 +178,12 @@ README.md
 
 ---
 
-## 6. ローカル起動方法 (リファレンス)
+## 7. ローカル起動方法 (リファレンス)
 
 > 手順は §2 のとおり `reference/SETUP_GUIDE.md` を参照してください。
 > ここではポート一覧と `.env` の主な変数だけまとめます。
 
-### 6.1 立ち上がるサービス
+### 7.1 立ち上がるサービス
 
 
 | URL                                                      | 用途                     |
@@ -182,7 +196,7 @@ README.md
 | postgres://localhost:5432                                | PostgreSQL (chat/chat) |
 
 
-### 6.2 .env の主な変数
+### 7.2 .env の主な変数
 
 
 | 変数                            | 既定値                                                  | 説明                                                                                                         |
@@ -201,7 +215,7 @@ README.md
 
 ---
 
-## 7. 現在の接続経路 (ローカル)
+## 8. 現在の接続経路 (ローカル)
 
 ```
 +---------------+     /api/*     +--------------+    HTTP    +-----------+
@@ -223,14 +237,14 @@ README.md
 
 ---
 
-## 8. 通常チャットの流れ
+## 9. 通常チャットの流れ
 
 1. フロントの `ChatComposer` で **RAG トグルを OFF** にする
 2. メッセージを送ると `/chat` → `LLM_PROVIDER` の実装 (ollama) →
   ストリーミングでトークンが流れてくる
 3. 会話履歴は `conversations` / `messages` テーブルに保存される
 
-## 9. RAG モードの将来想定の流れ
+## 10. RAG モードの将来想定の流れ
 
 1. `/ingest` ページからコレクションを作り、PDF をアップロード
 2. backend が `rag.index_document` で **チャンク分割 + embedding + Vector DB upsert** を行う
@@ -242,7 +256,7 @@ README.md
 
 ---
 
-## 10. AWS 移行時の想定
+## 11. AWS 移行時の想定
 
 詳しくは `terraform/main.tf` 内のコメントを参照。
 
