@@ -249,14 +249,20 @@ docker compose ps
 make up-d        # docker compose --profile bundled-ollama up -d
 ```
 
-### 6.2 .env を Compose 内 Ollama 接続に切り替える
+### 6.2 接続先の切替（`make up-d` を使うなら自動 / 直接 compose なら手動）
 
-`.env` の `OLLAMA_URL` を以下に変えます。
+backend コンテナから compose 内 `ollama` サービスに繋ぐには `OLLAMA_URL` を
+`http://ollama:11434` にする必要があります。
 
-```dotenv
-# .env
-OLLAMA_URL=http://ollama:11434
-```
+- **`make up-d` を使う場合**: Makefile 側で `OLLAMA_URL=http://ollama:11434` を
+  渡しているので、`.env` を編集する必要はありません。
+- **直接 `docker compose --profile bundled-ollama up -d` を叩く場合**:
+  `.env` を以下に書き換えてから起動してください。
+
+  ```dotenv
+  # .env
+  OLLAMA_URL=http://ollama:11434
+  ```
 
 > backend コンテナの中から見ると、compose 内の `ollama` サービスは
 > ホスト名 `ollama` で名前解決されます。
