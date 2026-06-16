@@ -138,6 +138,24 @@ ollama serve
 > アイコンが点灯していれば自動的にサーバが立ち上がっています。改めて `ollama serve` を
 > 叩く必要はありません。
 
+> **Linux ユーザーへの補足 (重要)**: ホスト OS の Ollama を Docker コンテナの
+> backend から利用するには、Ollama が `0.0.0.0:11434` で待ち受ける必要があります
+> （既定は `127.0.0.1:11434` のため、コンテナからの接続が届きません）。
+> 以下のいずれかで対応してください。
+>
+> - 都度起動する場合:
+>   ```bash
+>   OLLAMA_HOST=0.0.0.0:11434 ollama serve
+>   ```
+> - systemd で起動している場合:
+>   ```bash
+>   sudo systemctl edit ollama.service
+>   # [Service] セクションに以下を追加
+>   #   Environment="OLLAMA_HOST=0.0.0.0:11434"
+>   sudo systemctl restart ollama
+>   ```
+> - bind 設定が面倒なら §6 の「Compose 内 Ollama 一括起動」(`make up-d`) の方が手軽です。
+
 ### 3.2 チャット用モデルを取得
 
 別ターミナルで以下を実行します。
