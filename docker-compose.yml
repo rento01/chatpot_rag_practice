@@ -1,10 +1,21 @@
+# ローカル学習用 compose ファイル。
+#
+# 教材としてのねらい:
+#   - 1 コマンドで「LLM (Ollama) / Vector DB (Chroma) / RDB (Postgres) / backend / frontend」
+#     が立ち上がること
+#   - 各サービスの繋ぎ先が environment ブロックで一目で分かること
+
 services:
+  # ──────────────────────────────────────────────
+  # LLM (ローカル)
+  # ──────────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
     ports:
       - "11434:11434"
     volumes:
       - ollama:/root/.ollama
+    # GPU が無い環境では下記の deploy ブロックを丸ごとコメントアウトして OK
     deploy:
       resources:
         reservations:
@@ -19,6 +30,9 @@ services:
       retries: 10
       start_period: 10s
 
+  # ──────────────────────────────────────────────
+  # Vector DB
+  # ──────────────────────────────────────────────
   chromadb:
     image: chromadb/chroma:latest
     ports:
@@ -35,6 +49,9 @@ services:
       retries: 10
       start_period: 10s
 
+  # ──────────────────────────────────────────────
+  # RDB (会話履歴 / コレクション・ドキュメント管理)
+  # ──────────────────────────────────────────────
   db:
     image: postgres:16
     environment:
@@ -51,20 +68,27 @@ services:
       timeout: 3s
       retries: 10
 
+  # ──────────────────────────────────────────────
+  # Backend (FastAPI)
+  # ──────────────────────────────────────────────
   backend:
     build: .
-    image: rag-with-claude
+    image: rag-chat-template-backend
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
-      VISION_MODEL: ${VISION_MODEL:-llava}
-      DATABASE_URL: postgresql+psycopg://chat:chat@db:5432/chat
+      VECTOR_DB_PROVIDER: ${VECTOR_DB_PROVIDER:-chroma}
       CHROMA_HOST: chromadb
       CHROMA_PORT: "8000"
+      DATABASE_URL: postgresql+psycopg://chat:chat@db:5432/chat
+      CORS_ALLOW_ORIGINS: "http://localhost:3000"
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-50}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
@@ -76,11 +100,18 @@ services:
       chromadb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
       interval: 10s
       timeout: 3s
       retries: 5
 
+  # ──────────────────────────────────────────────
+  # Frontend (Next.js App Router)
+  # ──────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend

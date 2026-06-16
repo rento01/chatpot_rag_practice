@@ -7,6 +7,13 @@ __pycache__/
 .gitignore
 .dockerignore
 README.md
+ROAD_MAP.md
+ISSUES.md
+CLAUDE.md
 .claude/
 .pytest_cache/
 *.egg-info/
+node_modules/
+.next/
+terraform/
+docs/

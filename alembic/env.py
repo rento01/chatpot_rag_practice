@@ -7,9 +7,11 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
+# backend パッケージを import 可能にする
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from backend import models  # noqa: F401  ensure models register with Base.metadata
+# モデルを Base.metadata に登録するため、import 自体に副作用がある
+from backend import dataModels  # noqa: F401
 from backend.db import Base
 
 config = context.config
