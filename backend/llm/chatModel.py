@@ -3,29 +3,28 @@
 `stream()` でトークンを逐次返す async generator を返す方針。
 ストリーミング前提にしておけば、フロントエンドの体験を変えずに
 プロバイダだけ差し替えできる。
+
+引数の型は LangChain の `BaseMessage` 列に揃えている。
+呼び出し側（`backend/main.py`）で `ChatPromptTemplate.format_messages()` を
+通すことで、SystemMessage / HumanMessage / AIMessage が宣言的に組まれる前提。
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Iterable
+from typing import AsyncIterator, Sequence
+
+from langchain_core.messages import BaseMessage
 
 from backend.config import settings
-
-# ──────────────────────────────────────────────
-# 共通の型
-# ──────────────────────────────────────────────
-
-# メッセージは {"role": "system"|"user"|"assistant", "content": str} の dict
-ChatMessage = dict[str, str]
 
 
 class ChatModel(ABC):
     """チャット LLM の共通インターフェース。"""
 
     @abstractmethod
-    def stream(self, messages: Iterable[ChatMessage]) -> AsyncIterator[str]:
-        """system/user/assistant のメッセージ列を渡し、トークンを逐次返す。"""
+    def stream(self, messages: Sequence[BaseMessage]) -> AsyncIterator[str]:
+        """LangChain の BaseMessage 列を渡し、トークンを逐次返す。"""
         raise NotImplementedError
 
 

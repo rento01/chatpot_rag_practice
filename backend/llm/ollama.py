@@ -1,25 +1,30 @@
 """Ollama 実装。
 
-ローカル開発の前提実装。`OLLAMA_URL` の HTTP API を直接叩く。
+ローカル開発の前提実装。
+チャット呼び出しは LangChain (`langchain-ollama` の `ChatOllama`) 経由で
+行い、トークンストリーミングは `astream()` で受け取る。
 
 教材としてのねらい:
-- LangChain などのラッパ経由ではなく、生 HTTP を見せる
-- 何が起きているか（system プロンプトの組み立て・ストリーミング処理）を
-  そのままコードから追える
+- LangChain の ChatModel と BaseMessage / astream に慣れる
+- 生 HTTP / NDJSON パースは LangChain 側に隠蔽してもらう代わりに、
+  呼び出し側（`backend/main.py`）で ChatPromptTemplate を組み立てる流れに触れる
+
+埋め込み (OllamaEmbedModel) は Phase 3 用の雛形なのでここでは触らない。
 """
 
 from __future__ import annotations
 
-import json
-from typing import AsyncIterator, Iterable
+from typing import AsyncIterator, Sequence
 
 import httpx
 import requests
+from langchain_core.messages import BaseMessage
+from langchain_ollama import ChatOllama
 
 from backend.config import settings
 from backend.logging_config import get_logger
 
-from .chatModel import ChatMessage, ChatModel
+from .chatModel import ChatModel
 from .embedModel import EmbedModel
 
 logger = get_logger(__name__)
@@ -31,46 +36,36 @@ logger = get_logger(__name__)
 
 
 class OllamaChatModel(ChatModel):
-    """Ollama /api/chat への薄いラッパ。"""
+    """LangChain `ChatOllama` への薄いラッパ。"""
 
     def __init__(self) -> None:
-        self.base_url = settings.ollama_url
-        self.model = settings.ollama_chat_model
+        # NOTE: LangChain のクライアントを保持する。base_url / model は
+        # 既存どおり .env の設定値をそのまま使う。
+        self._llm = ChatOllama(
+            base_url=settings.ollama_url,
+            model=settings.ollama_chat_model,
+        )
 
-    async def stream(self, messages: Iterable[ChatMessage]) -> AsyncIterator[str]:
-        """Ollama にストリーミングリクエストを送り、トークンを逐次 yield する。
-
-        Ollama の `stream=True` は NDJSON 形式のレスポンスを返すため、
-        1 行ずつパースして `message.content` を取り出す。
+    async def stream(self, messages: Sequence[BaseMessage]) -> AsyncIterator[str]:
+        """LangChain の astream() でトークンを逐次 yield する。
 
         実装メモ:
-        - FastAPI のイベントループをブロックしないよう httpx.AsyncClient を使う
-          （以前は同期 `requests` を async def 内で回しており、応答中は
-            他のリクエストが詰まる問題があった）
         - エラー時はログに残すだけで yield しない（ストリームに混ぜると
           そのまま会話履歴に保存されてしまうため）
+        - chunk は AIMessageChunk。`content` の型は LangChain 上
+          `str | list[str | dict]`（マルチモーダル対応）。Ollama 経由では実質
+          str しか来ないが、念のため isinstance ガードで弾く
+        - 例外は接続系（httpx.HTTPError）とそれ以外でログメッセージを分ける。
+          バグ要因の例外も log には残るので、ローカルで気づきやすくしてある
         """
-        payload = {
-            "model": self.model,
-            "messages": list(messages),
-            "stream": True,
-        }
         try:
-            async with httpx.AsyncClient(timeout=None) as client:
-                async with client.stream(
-                    "POST", f"{self.base_url}/api/chat", json=payload
-                ) as resp:
-                    resp.raise_for_status()
-                    async for line in resp.aiter_lines():
-                        if not line:
-                            continue
-                        data = json.loads(line)
-                        chunk = data.get("message", {}).get("content")
-                        if chunk:
-                            yield chunk
-                        if data.get("done"):
-                            break
+            async for chunk in self._llm.astream(list(messages)):
+                content = getattr(chunk, "content", "")
+                if isinstance(content, str) and content:
+                    yield content
         except httpx.HTTPError:
+            logger.exception("Ollama 接続エラー")
+        except Exception:
             logger.exception("Ollama チャット呼び出しに失敗しました")
             # ストリームには何も流さない（呼び出し元では空応答 = 履歴に保存しない）
 

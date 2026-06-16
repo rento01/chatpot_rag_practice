@@ -20,6 +20,13 @@ dependencies = [
     "pypdf>=4.0.0",
     "langchain-text-splitters>=0.3.0",
 
+    # ── LLM ラッパ (LangChain) ─────────────────
+    # チャット LLM 呼び出しは LangChain 経由で行う方針。
+    # フレームワークの ChatPromptTemplate / Messages / astream に揃えると、
+    # 将来 Bedrock 等に差し替えても呼び出し側の流れを変えずに済む。
+    "langchain-core>=0.3.0",
+    "langchain-ollama>=0.3.0",
+
     # ── ベクトル DB ────────────────────────────
     "chromadb>=0.6.0",
 

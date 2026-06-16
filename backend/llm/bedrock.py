@@ -17,11 +17,13 @@ Phase 7 (AWS 移行) で実装する想定の placeholder。
 
 from __future__ import annotations
 
-from typing import AsyncIterator, Iterable
+from typing import AsyncIterator, Sequence
+
+from langchain_core.messages import BaseMessage
 
 from backend.config import settings
 
-from .chatModel import ChatMessage, ChatModel
+from .chatModel import ChatModel
 from .embedModel import EmbedModel
 
 
@@ -34,7 +36,7 @@ class BedrockChatModel(ChatModel):
         # NOTE: 本実装時に boto3 セッションをここで作る。
         # self._client = boto3.client("bedrock-runtime", region_name=self.region)
 
-    async def stream(self, messages: Iterable[ChatMessage]) -> AsyncIterator[str]:
+    async def stream(self, messages: Sequence[BaseMessage]) -> AsyncIterator[str]:
         # NOTE: 本実装時には bedrock-runtime の converse_stream を使う想定。
         #   for event in self._client.converse_stream(...)["stream"]:
         #       delta = event.get("contentBlockDelta", {}).get("delta", {}).get("text")

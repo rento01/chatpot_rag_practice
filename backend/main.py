@@ -28,6 +28,8 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -73,6 +75,29 @@ SYSTEM_RAG_NO_HIT = (
     "あなたは社内文書を参照して質問に回答するアシスタントです。"
     "選択されたコレクションに参照できる文書がまだないため、"
     "推測で答えず必ず日本語で『資料に記載がありません』と回答してください。"
+)
+
+
+# system プロンプトを LangChain の ChatPromptTemplate として宣言しておく。
+# RAG ヒット時のみ {context} 変数が埋め込まれる。会話履歴は MessagesPlaceholder
+# でそのまま差し込む。`format_messages()` で BaseMessage 列に変換できる。
+GENERAL_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM_GENERAL),
+        MessagesPlaceholder("history"),
+    ]
+)
+RAG_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM_RAG_TEMPLATE),
+        MessagesPlaceholder("history"),
+    ]
+)
+RAG_NO_HIT_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        ("system", SYSTEM_RAG_NO_HIT),
+        MessagesPlaceholder("history"),
+    ]
 )
 
 
@@ -366,13 +391,20 @@ def get_document_file(document_id: int, db: DB) -> Response:
 # ──────────────────────────────────────────────
 
 
-def _build_messages(req: schemas.ChatRequest) -> list[dict[str, str]]:
-    """LLM に渡すメッセージ列を組み立てる。
+def _build_messages(req: schemas.ChatRequest) -> list[BaseMessage]:
+    """LLM に渡す BaseMessage 列を組み立てる。
 
     use_rag=True かつ collection_id 指定時のみ RAG コンテキストを差し込む。
-    教材初期段階では検索は未実装なので、NO_DOCUMENTS_MESSAGE が入る。
+    教材初期段階では検索は未実装なので、ヒット 0 として NO_HIT 用の system
+    プロンプトが選ばれる。
     """
-    system_content = SYSTEM_GENERAL
+    # フロントから来た履歴を LangChain のメッセージ型に変換する。
+    # role が想定外の場合は user 扱いで吸収（フロントが将来追加した役割で
+    # 落ちないよう、防御的に倒す）。
+    history: list[BaseMessage] = [
+        AIMessage(m.content) if m.role == "assistant" else HumanMessage(m.content)
+        for m in req.messages
+    ]
 
     if req.use_rag and req.collection_id is not None:
         # 直近の user 発話をクエリとして RAG にかける
@@ -382,13 +414,12 @@ def _build_messages(req: schemas.ChatRequest) -> list[dict[str, str]]:
         )
         ctx = rag.build_context(last_user, req.collection_id)
         if ctx.has_hits:
-            system_content = SYSTEM_RAG_TEMPLATE.format(context=ctx.context_text)
-        else:
-            system_content = SYSTEM_RAG_NO_HIT
+            return RAG_PROMPT.format_messages(
+                context=ctx.context_text, history=history
+            )
+        return RAG_NO_HIT_PROMPT.format_messages(history=history)
 
-    messages: list[dict[str, str]] = [{"role": "system", "content": system_content}]
-    messages.extend({"role": m.role, "content": m.content} for m in req.messages)
-    return messages
+    return GENERAL_PROMPT.format_messages(history=history)
 
 
 @app.post("/chat")
