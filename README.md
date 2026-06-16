@@ -30,44 +30,49 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 教材としては「中身を理解しながら動かす」ことを優先するため、
 **Makefile に頼らず Docker コマンドを手打ち** で進める導線を採っています。
-細かな手順は `[SETUP_GUIDE.md](SETUP_GUIDE.md)` にまとめてあるので、初回はそちらを開きながら作業してください。
+細かな手順は [`SETUP_GUIDE.md`](SETUP_GUIDE.md) にまとめてあるので、初回はそちらを開きながら作業してください。
+
+> Ollama 利用方針: このテンプレでは **Ollama はホスト OS で起動する** のが標準です。
+> Docker Compose 内で一括起動したい場合は `make up-d` を使います（詳細: `SETUP_GUIDE.md` §6）。
 
 ざっくりの流れは次のとおりです。
 
 1. **前提ソフトのインストール**
-  - Docker Desktop をインストールし、起動状態にしておく
-  - 詳細: `SETUP_GUIDE.md` §1
-2. `**.env` の作成**
-  ```bash
+   - Docker Desktop と Ollama（ホスト OS 用）をインストールし、両方を起動状態にしておく
+   - 詳細: `SETUP_GUIDE.md` §1
+2. **`.env` の作成**
+   ```bash
    cp .env.example .env
-  ```
-3. **コンテナ起動（手打ち）**
-  ```bash
-   docker compose up -d
+   ```
+   `OLLAMA_URL` はデフォルトで `http://host.docker.internal:11434` に設定済み。
+3. **ホスト OS で Ollama を起動 + モデル取得**
+   ```bash
+   ollama serve                          # 別ターミナルで常時起動
+   ollama pull llama3.2                  # チャット用
+   ollama pull nomic-embed-text          # Phase 3 用
+   ```
+4. **Docker Compose で残りのサービスを起動**
+   ```bash
+   docker compose up -d                  # backend / frontend / db / chromadb
    docker compose ps
-  ```
-4. **Ollama モデルの取得（初回のみ）**
-  ```bash
-   docker compose exec ollama ollama pull llama3.2          # チャット用
-   docker compose exec ollama ollama pull nomic-embed-text  # Phase 3 用
-  ```
+   ```
 5. **ブラウザで動作確認**
-  - [http://localhost:3000](http://localhost:3000) を開き、**RAG トグル OFF** でチャットを送信
-  - `/ingest` で PDF アップロード → ステータスは `error` で停止する（仕様。Phase 2-1 で実装するパス）
+   - [http://localhost:3000](http://localhost:3000) を開き、**RAG トグル OFF** でチャットを送信
+   - `/ingest` で PDF アップロード → ステータスは `error` で停止する（仕様。Phase 2-1 で実装するパス）
 6. **ログを眺める癖をつける**
-  ```bash
+   ```bash
    docker compose logs -f             # 全サービス
    docker compose logs -f backend     # backend だけ
-  ```
+   ```
 7. **次の学習に進む**
-  - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
-  - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
+   - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
+   - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
 
 ### 知っておきたい補足
 
 - **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `SETUP_GUIDE.md` §5）。
-- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に有効化し、`docker-compose.yml` の `ollama.ports` と `backend.depends_on.ollama` を 2 か所だけ手で外したうえで、`docker compose up -d --force-recreate backend` で再生成すれば、コンテナの backend からホスト側 Ollama に繋がります（詳細: `SETUP_GUIDE.md` §6）。
-- **Makefile は任意の補助手段** です。`make up-d` / `make pull` などのショートカットを用意していますが、初学者向けの導線としては手打ちコマンドを優先しています。慣れたら Makefile を使ってください（詳細: `SETUP_GUIDE.md` §9）。
+- **Ollama を Docker Compose 内で動かす運用も可能です。** その場合は `make up-d` で `--profile bundled-ollama` を付けた compose を起動し、`.env` の `OLLAMA_URL` を `http://ollama:11434` に切り替えます（詳細: `SETUP_GUIDE.md` §6）。
+- **Makefile は Compose 内 Ollama 一括起動用の補助** です。ホスト Ollama を使う標準フローでは必須ではありません（詳細: `SETUP_GUIDE.md` §9）。
 
 ---
 
@@ -182,7 +187,7 @@ README.md
 | 変数                            | 既定値                                                  | 説明                                                                                                         |
 | ----------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `LLM_PROVIDER`                | `ollama`                                             | `ollama` か `bedrock`                                                                                       |
-| `OLLAMA_URL`                  | (compose 内では `http://ollama:11434`)                  | Ollama エンドポイント。compose 内 Ollama を使う場合は未設定で OK / ホスト OS 側 Ollama を使う場合は `http://host.docker.internal:11434` |
+| `OLLAMA_URL`                  | `http://host.docker.internal:11434` (ホスト Ollama) | Ollama エンドポイント。Compose 内 Ollama (`make up-d`) を使う場合は `http://ollama:11434` |
 | `OLLAMA_MODEL`                | `llama3.2`                                           | チャット用モデル                                                                                                   |
 | `EMBEDDING_MODEL`             | `nomic-embed-text`                                   | 埋め込み用モデル                                                                                                   |
 | `VECTOR_DB_PROVIDER`          | `chroma`                                             | `chroma` か `opensearch`                                                                                    |

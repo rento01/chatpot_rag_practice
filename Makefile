@@ -9,24 +9,27 @@ MSG ?= update
 
 # ──────────────────────────────────────────────
 # Compose 操作
+#   Issue #29: デフォルトはホスト OS で `ollama serve` を起動する想定。
+#   ここの up / up-d は compose 内 Ollama も含めて一括起動するための補助コマンド
+#   (`--profile bundled-ollama` で ollama サービスを起動対象に含める)。
 # ──────────────────────────────────────────────
 up:
-	docker compose up
+	docker compose --profile bundled-ollama up
 
 up-d:
-	docker compose up -d
+	docker compose --profile bundled-ollama up -d
 
 down:
-	docker compose down
+	docker compose --profile bundled-ollama down
 
 build:
-	docker compose build
+	docker compose --profile bundled-ollama build
 
 logs:
 	docker compose logs -f
 
 restart:
-	docker compose restart
+	docker compose --profile bundled-ollama restart
 
 # ──────────────────────────────────────────────
 # Ollama モデル取得
