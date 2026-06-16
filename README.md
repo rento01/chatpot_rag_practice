@@ -66,7 +66,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 ### 知っておきたい補足
 
 - **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `SETUP_GUIDE.md` §5）。
-- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に有効化（コメントアウトを外す）し、`docker compose up -d --force-recreate backend` で再生成すれば、コンテナの backend からホスト側 Ollama に繋がります（詳細: `SETUP_GUIDE.md` §6）。
+- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に有効化し、`docker-compose.yml` の `ollama.ports` と `backend.depends_on.ollama` を 2 か所だけ手で外したうえで、`docker compose up -d --force-recreate backend` で再生成すれば、コンテナの backend からホスト側 Ollama に繋がります（詳細: `SETUP_GUIDE.md` §6）。
 - **Makefile は任意の補助手段** です。`make up-d` / `make pull` などのショートカットを用意していますが、初学者向けの導線としては手打ちコマンドを優先しています。慣れたら Makefile を使ってください（詳細: `SETUP_GUIDE.md` §9）。
 
 ---

@@ -191,9 +191,49 @@ Linux の Docker でも近年は使えるようになっています
 （古い Linux Docker では `--add-host=host.docker.internal:host-gateway` が
 必要な場合があります）。
 
-### 6.3 backend だけ再起動して .env を反映
+### 6.3 docker-compose.yml を 2 か所だけ手で編集する
 
-`.env` を書き換えたら backend のみ再起動します。
+ホスト OS 側 Ollama を使う場合は、`.env` を書き換えるだけでなく
+`docker-compose.yml` を **2 か所だけ** 手で編集する必要があります。
+
+理由:
+
+1. `ollama` サービスがホスト側ポート `11434:11434` を bind するため、
+   ホストの `ollama serve` と **ポート競合** して `docker compose up` が失敗する
+2. `backend.depends_on.ollama` が compose 内 `ollama` の healthcheck を待つため、
+   ホスト側 Ollama に切り替えても backend が起動できなくなる
+
+そのため、以下を編集します（教材としてあえて手動編集にしています。
+将来的に compose profile / override ファイルで自動化する想定です）。
+
+```diff
+   ollama:
+     image: ollama/ollama:latest
+-    ports:
+-      - "11434:11434"
++    # ホスト OS 側 Ollama を使う場合はポート公開を外す
++    # ports:
++    #   - "11434:11434"
+     volumes:
+       - ollama:/root/.ollama
+
+   backend:
+     depends_on:
+-      ollama:
+-        condition: service_healthy
++      # ホスト OS 側 Ollama を使う場合は compose 内 ollama を待たない
+       db:
+         condition: service_healthy
+       chromadb:
+         condition: service_healthy
+```
+
+> これはリポジトリにコミットせず、各自の手元で書き換える前提です。
+> （compose を毎回切り替えたい人は §6.4 の「任意」案を参照）
+
+### 6.4 backend を再起動して .env を反映
+
+上記編集を終えたら backend のみ再起動します。
 compose の `${OLLAMA_URL:-...}` は **起動時に評価される** ため、
 single restart ではなく `--force-recreate` で再生成する必要があります。
 
@@ -203,17 +243,36 @@ docker compose up -d --force-recreate backend
 
 接続先が切り替わったかは `docker compose logs backend` で確認できます。
 
-### 6.4 (任意) Docker Compose の ollama サービスを止める
+### 6.5 (任意) compose 内 ollama コンテナを止める
 
-ホスト側 Ollama を使う場合、`docker compose` の `ollama` コンテナは
-リソース節約のため止めても構いません。
+ホスト側 Ollama を使う場合、§6.3 でポート公開と依存を外していれば
+compose 内 `ollama` コンテナが残っていても影響しません。
+リソース節約のため止めておくと無駄が無いです。
 
 ```bash
 docker compose stop ollama
 ```
 
-`docker-compose.yml` の `ollama` サービスを編集（コメントアウト）するのは
-任意です。**.env で接続先を切り替える** のがいちばん壊れにくいやり方です。
+### 6.6 (任意) override ファイルで切り替える
+
+`docker-compose.yml` を毎回書き換えたくない場合は、override ファイルで
+ホスト側 Ollama 用の差分だけ別管理する方法もあります（教材スコープ外なので
+ここでは案だけ示します）。
+
+```yaml
+# compose.host-ollama.yml
+services:
+  ollama:
+    # 起動から除外する
+    profiles: ["disabled"]
+  backend:
+    # ollama 依存を上書きで消す（compose v2.20+ の !reset 機能）
+    depends_on: !reset null
+```
+
+```bash
+docker compose -f docker-compose.yml -f compose.host-ollama.yml up -d
+```
 
 ---
 
