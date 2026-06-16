@@ -32,20 +32,29 @@
 
 ## Phase 0-1: 環境構築
 
-- Docker / Docker Compose のインストール
-- Ollama のセットアップ（モデル: `llama3.2`, `nomic-embed-text`）
-- `make up-d && make pull && make pull-embed` でローカル一式が起動することを確認
+詳細手順はすべて [`SETUP_GUIDE.md`](SETUP_GUIDE.md) にまとめてあります。
+この Phase ではそこを順に追ってください。
 
-**ゴール**: `http://localhost:3000` でチャットが返ってくる。
+ここで押さえる項目:
+
+- 前提ソフト（Docker Desktop / Ollama）のインストールと起動確認
+- テンプレを clone して自分用リポジトリ `PlusValueLab/{Name}-rag` として初期化
+- `.env` 作成と必要に応じた `OLLAMA_URL` の調整
+- `docker compose up -d` で全サービス起動と `ollama pull` でのモデル取得
+
+**ゴール**: `http://localhost:3000` でチャットが返ってくる
+（教材のメイン導線は `docker compose` の手打ち。Makefile は任意の補助手段）。
 
 ## Phase 0-2: 構成理解（rag-with-claude repo も併読）
+
+Phase 0-1 のセットアップが終わってから、コードを読み解きます。
 
 - 既存実装を読む順番（おすすめ）:
   1. `backend/main.py`（ルーティング全体）
   2. `backend/dataModels.py` / `backend/schemas.py`（データ）
   3. `backend/rag.py`（薄ラッパ — まだ何もしていない）
   4. `backend/llm/` / `backend/vector_db/`（プロバイダ切り替え）
-  5. `frontend/src/app/page.tsx`（チャットの UI と API 呼び出し）
+  5. `frontend/src/app/page.tsx`(チャットの UI と API 呼び出し)
 - 並行して **rag-with-claude** リポジトリの実装も読む
   - 本テンプレでは省いた parent-child chunk / BM25+RRF / リランクの実装が
     参考になる
@@ -54,13 +63,18 @@
 
 ---
 
-## Phase 1: ローカル起動
+## Phase 1: ローカル起動の確認と試行
 
-- `.env` を編集して別モデル (`gemma3`, `qwen2.5` 等) で動かしてみる
+Phase 0-1 で動いた状態を「自分の手で触って試す」 Phase です。
+
+- チャット画面で **RAG トグル OFF** のまま、いくつか質問してストリームを確認する
+- `.env` を編集して別モデル (`gemma3`, `qwen2.5` 等) を試す
+  - `OLLAMA_MODEL` を書き換え → `docker compose exec ollama ollama pull <model>` → backend を `--force-recreate`
 - `/ingest` ページから PDF をアップロードし、status が `error` になることを確認
   （初期状態では `rag.index_document` が `NotImplementedError` のため）
+- ログの読み方を覚える: `docker compose logs -f backend`
 
-**ゴール**: 自分の環境で確実に動く前提が整う。
+**ゴール**: 自分の環境で確実に動く前提が整い、Phase 2-1 以降の実装に集中できる状態。
 
 ---
 
