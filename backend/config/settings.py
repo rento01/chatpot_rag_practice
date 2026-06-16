@@ -12,6 +12,14 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+from dotenv import load_dotenv
+
+# settings は import 時に os.getenv を評価して固定するため、
+# どの import 経路から呼ばれても先に .env を読み込んでおく必要がある。
+# `load_dotenv()` は冪等（既存環境変数は上書きしない）なので、テスト等で
+# 環境変数を明示注入したケースも壊さない。
+load_dotenv()
+
 # ──────────────────────────────────────────────
 # 設定オブジェクト
 # ──────────────────────────────────────────────

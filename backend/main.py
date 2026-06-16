@@ -17,7 +17,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Annotated
 
-from dotenv import load_dotenv
 from fastapi import (
     BackgroundTasks,
     Depends,
@@ -34,6 +33,11 @@ from sqlalchemy.orm import Session
 
 from backend import dataModels as dm
 from backend import rag, schemas
+
+# backend.config は import 時に .env をロードする。
+# どのモジュール経由で import されても、最終的に
+# backend.config.settings が解決されるタイミングで `load_dotenv()` が
+# 走るので、起動経路で「.env が反映されない」事故を防げる。
 from backend.config import settings
 from backend.db import SessionLocal, get_db, run_migrations
 from backend.llm import get_chat_model
@@ -45,7 +49,6 @@ from backend.vector_db import get_vector_db
 # 初期化
 # ──────────────────────────────────────────────
 
-load_dotenv()
 setup_logging()
 logger = get_logger(__name__)
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from typing import AsyncIterator, Iterable
 
+import httpx
 import requests
 
 from backend.config import settings
@@ -42,8 +43,12 @@ class OllamaChatModel(ChatModel):
         Ollama の `stream=True` は NDJSON 形式のレスポンスを返すため、
         1 行ずつパースして `message.content` を取り出す。
 
-        エラー時はログに残すだけで yield しない方針にしている。
-        ストリームに混ぜると、その文字列がそのまま会話履歴に保存されてしまうため。
+        実装メモ:
+        - FastAPI のイベントループをブロックしないよう httpx.AsyncClient を使う
+          （以前は同期 `requests` を async def 内で回しており、応答中は
+            他のリクエストが詰まる問題があった）
+        - エラー時はログに残すだけで yield しない（ストリームに混ぜると
+          そのまま会話履歴に保存されてしまうため）
         """
         payload = {
             "model": self.model,
@@ -51,23 +56,21 @@ class OllamaChatModel(ChatModel):
             "stream": True,
         }
         try:
-            with requests.post(
-                f"{self.base_url}/api/chat",
-                json=payload,
-                stream=True,
-                timeout=None,
-            ) as resp:
-                resp.raise_for_status()
-                for line in resp.iter_lines(decode_unicode=True):
-                    if not line:
-                        continue
-                    data = json.loads(line)
-                    chunk = data.get("message", {}).get("content")
-                    if chunk:
-                        yield chunk
-                    if data.get("done"):
-                        break
-        except requests.RequestException:
+            async with httpx.AsyncClient(timeout=None) as client:
+                async with client.stream(
+                    "POST", f"{self.base_url}/api/chat", json=payload
+                ) as resp:
+                    resp.raise_for_status()
+                    async for line in resp.aiter_lines():
+                        if not line:
+                            continue
+                        data = json.loads(line)
+                        chunk = data.get("message", {}).get("content")
+                        if chunk:
+                            yield chunk
+                        if data.get("done"):
+                            break
+        except httpx.HTTPError:
             logger.exception("Ollama チャット呼び出しに失敗しました")
             # ストリームには何も流さない（呼び出し元では空応答 = 履歴に保存しない）
 
