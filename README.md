@@ -4,7 +4,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 最小実装のチャットアプリ + 文書取り込みテンプレートです。
 
 > 最初は **動くチャット + 空の RAG ラッパ + 文書アップロード API** だけが
-> 揃っています。検索ロジックやベクトル化は、学習者が `ROAD_MAP.md` の
+> 揃っています。検索ロジックやベクトル化は、学習者が `reference/ROAD_MAP.md` の
 > Phase に沿って段階的に実装していきます。
 
 ---
@@ -30,16 +30,16 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 教材としては「中身を理解しながら動かす」ことを優先するため、
 **Makefile に頼らず Docker コマンドを手打ち** で進める導線を採っています。
-細かな手順は [`SETUP_GUIDE.md`](SETUP_GUIDE.md) にまとめてあるので、初回はそちらを開きながら作業してください。
+細かな手順は [`reference/SETUP_GUIDE.md`](reference/SETUP_GUIDE.md) にまとめてあるので、初回はそちらを開きながら作業してください。
 
 > Ollama 利用方針: このテンプレでは **Ollama はホスト OS で起動する** のが標準です。
-> Docker Compose 内で一括起動したい場合は `make up-d` を使います（詳細: `SETUP_GUIDE.md` §6）。
+> Docker Compose 内で一括起動したい場合は `make up-d` を使います（詳細: `reference/SETUP_GUIDE.md` §6）。
 
 ざっくりの流れは次のとおりです。
 
 1. **前提ソフトのインストール**
    - Docker Desktop と Ollama（ホスト OS 用）をインストールし、両方を起動状態にしておく
-   - 詳細: `SETUP_GUIDE.md` §1
+   - 詳細: `reference/SETUP_GUIDE.md` §1
 2. **`.env` の作成**
    ```bash
    cp .env.example .env
@@ -65,22 +65,22 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
    docker compose logs -f backend     # backend だけ
    ```
 7. **次の学習に進む**
-   - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
-   - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
+   - `reference/ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
+   - 詰まったら `reference/ISSUES.md` の Phase 別 Issue 原稿を参照
 
 ### 知っておきたい補足
 
-- **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `SETUP_GUIDE.md` §5）。
-- **Ollama を Docker Compose 内で動かす運用も可能です。** その場合は `make up-d` で `--profile bundled-ollama` を付けた compose を起動し、`.env` の `OLLAMA_URL` を `http://ollama:11434` に切り替えます（詳細: `SETUP_GUIDE.md` §6）。
-- **Makefile は Compose 内 Ollama 一括起動用の補助** です。ホスト Ollama を使う標準フローでは必須ではありません（詳細: `SETUP_GUIDE.md` §9）。
+- **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `reference/SETUP_GUIDE.md` §5）。
+- **Ollama を Docker Compose 内で動かす運用も可能です。** その場合は `make up-d` で `--profile bundled-ollama` を付けた compose を起動し、`.env` の `OLLAMA_URL` を `http://ollama:11434` に切り替えます（詳細: `reference/SETUP_GUIDE.md` §6）。
+- **Makefile は Compose 内 Ollama 一括起動用の補助** です。ホスト Ollama を使う標準フローでは必須ではありません（詳細: `reference/SETUP_GUIDE.md` §9）。
 
 ---
 
 ## 3. 関連ドキュメント
 
-- [SETUP_GUIDE.md](SETUP_GUIDE.md) — Docker 手打ちコマンドでのセットアップ手順 / トラブルシュート
-- [ROAD_MAP.md](ROAD_MAP.md) — Phase 0-1 〜 Phase 8 の学習ロードマップ
-- [ISSUES.md](ISSUES.md) — 各 Phase の Issue 原稿
+- [reference/SETUP_GUIDE.md](reference/SETUP_GUIDE.md) — Docker 手打ちコマンドでのセットアップ手順 / トラブルシュート
+- [reference/ROAD_MAP.md](reference/ROAD_MAP.md) — Phase 0-1 〜 Phase 8 の学習ロードマップ
+- [reference/ISSUES.md](reference/ISSUES.md) — 各 Phase の Issue 原稿
 - [terraform/main.tf](terraform/main.tf) — AWS 想定構成（コメント中心）
 - [.claude/skills/frontend-design/SKILL.md](.claude/skills/frontend-design/SKILL.md) — frontend design skill
 - [.claude/skills/bolt-planning/SKILL.md](.claude/skills/bolt-planning/SKILL.md) — bolt 単位で「何を作るか」を整理する skill
@@ -154,9 +154,10 @@ terraform/
 
 docs/                   学習ログや補足資料を置く場所
 
-SETUP_GUIDE.md          Docker 手打ちのセットアップ手順
-ROAD_MAP.md             Phase 0-1 〜 Phase 8 の学習ロードマップ
-ISSUES.md               Phase ごとの Issue 原稿
+reference/
+  SETUP_GUIDE.md        Docker 手打ちのセットアップ手順
+  ROAD_MAP.md           Phase 0-1 〜 Phase 8 の学習ロードマップ
+  ISSUES.md             Phase ごとの Issue 原稿
 CLAUDE.md               (空) プロジェクト固有の Claude 用メモを書く場所
 README.md
 ```
@@ -165,7 +166,7 @@ README.md
 
 ## 6. ローカル起動方法 (リファレンス)
 
-> 手順は §2 のとおり `SETUP_GUIDE.md` を参照してください。
+> 手順は §2 のとおり `reference/SETUP_GUIDE.md` を参照してください。
 > ここではポート一覧と `.env` の主な変数だけまとめます。
 
 ### 6.1 立ち上がるサービス

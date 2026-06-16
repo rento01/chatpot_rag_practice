@@ -6,7 +6,7 @@
 - `build_context()` は「参照できる文書がまだありません」相当を返す
   → 学習者が Phase 2 以降で順に埋めていく
 
-実装する順番（ROAD_MAP.md にも記載）:
+実装する順番（reference/ROAD_MAP.md にも記載）:
   Phase 2-1: extract_text と VectorDB.upsert を埋めて取り込み完成
   Phase 2-2: VectorDB.search のキーワード検索を実装
   Phase 3-1: embedModel.embed を使って embedding を生成
