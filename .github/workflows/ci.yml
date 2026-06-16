@@ -7,6 +7,9 @@ on:
     branches: [main]
 
 jobs:
+  # ──────────────────────────────────────────────
+  # Backend (FastAPI) lint + syntax
+  # ──────────────────────────────────────────────
   backend:
     name: Backend lint
     runs-on: ubuntu-latest
@@ -27,8 +30,11 @@ jobs:
       - name: Syntax check
         run: python -m compileall -q backend alembic
 
+  # ──────────────────────────────────────────────
+  # Frontend (Next.js) build
+  # ──────────────────────────────────────────────
   frontend:
-    name: Frontend lint & build
+    name: Frontend build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -50,3 +56,53 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
+
+  # ──────────────────────────────────────────────
+  # Terraform (formatting + validate)
+  # 教材初期段階では plan/apply は流さない。
+  # AWS 移行 (Phase 7) で OIDC を組んでから、deploy ワークフローを追加する想定。
+  # ──────────────────────────────────────────────
+  terraform:
+    name: Terraform fmt & validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.7
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: terraform init (no backend)
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        run: terraform validate
+
+  # ──────────────────────────────────────────────
+  # OIDC で apply / deploy する想定 (Phase 7 で実装)
+  #
+  # jobs.deploy:
+  #   name: Terraform apply (AWS OIDC)
+  #   if: github.ref == 'refs/heads/main'
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::<account>:role/<github-actions-role>
+  #         aws-region: ap-northeast-1
+  #     - uses: hashicorp/setup-terraform@v3
+  #     - run: terraform init
+  #       working-directory: terraform
+  #     - run: terraform apply -auto-approve
+  #       working-directory: terraform
+  # ──────────────────────────────────────────────
