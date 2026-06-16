@@ -1,21 +1,28 @@
 # ローカル学習用 compose ファイル。
 #
 # 教材としてのねらい:
-#   - 1 コマンドで「LLM (Ollama) / Vector DB (Chroma) / RDB (Postgres) / backend / frontend」
-#     が立ち上がること
 #   - 各サービスの繋ぎ先が environment ブロックで一目で分かること
+#
+# Ollama 利用方針 (Issue #29):
+#   - デフォルトでは Ollama は **ホスト OS 側** で `ollama serve` を起動する想定
+#   - `docker compose up -d` ではここで定義する ollama サービスは起動しない
+#     (`profiles: [bundled-ollama]` でデフォルト除外)
+#   - Docker Compose 内で Ollama も一括起動したい場合は Makefile の `make up-d`
+#     を使う (Makefile 側で `--profile bundled-ollama` 指定)
 
 services:
   # ──────────────────────────────────────────────
-  # LLM (ローカル)
+  # LLM (ローカル) — オプション (profile: bundled-ollama)
   # ──────────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
+    # profile が指定されていない通常の `docker compose up -d` ではこのサービスは
+    # 起動しない。Makefile の `make up-d` が `--profile bundled-ollama` を付与する。
+    profiles: ["bundled-ollama"]
     ports:
       - "11434:11434"
     volumes:
       - ollama:/root/.ollama
-    
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
@@ -70,11 +77,16 @@ services:
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
+    # Linux Docker でも host.docker.internal を解決できるようにする
+    # (Docker Desktop / Mac / Windows ではこの設定がなくても解決可能だが、
+    #  Linux Docker Engine では host-gateway を明示しないと解決されない)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
-      # OLLAMA_URL は .env で上書き可能（ホスト OS の `ollama serve` に
-      # 切り替えたい場合は .env で http://host.docker.internal:11434 を指定する）
-      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      # OLLAMA_URL は .env で上書き可能。
+      # 未設定時の既定はホスト OS 側 Ollama (Issue #29 でデフォルト化)
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
       VECTOR_DB_PROVIDER: ${VECTOR_DB_PROVIDER:-chroma}
@@ -87,9 +99,9 @@ services:
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+    # backend は ollama に依存しない (ホスト Ollama がデフォルトのため)。
+    # compose 内 ollama を使う場合 (`make up-d`) は profile 経由で同時起動する。
     depends_on:
-      ollama:
-        condition: service_healthy
       db:
         condition: service_healthy
       chromadb:

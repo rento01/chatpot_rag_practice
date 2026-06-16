@@ -9,24 +9,32 @@ MSG ?= update
 
 # ──────────────────────────────────────────────
 # Compose 操作
+#   Issue #29: デフォルトはホスト OS で `ollama serve` を起動する想定。
+#   ここの up / up-d は compose 内 Ollama も含めて一括起動するための補助コマンド
+#   (`--profile bundled-ollama` で ollama サービスを起動対象に含める)。
+#
+#   up / up-d は OLLAMA_URL=http://ollama:11434 を明示的に上書きし、
+#   .env のデフォルト (host.docker.internal) があっても compose 内 Ollama に
+#   接続するようにしている。これにより「ホスト Ollama 未インストールの人が
+#   make up-d だけで動く」状態を保てる。
 # ──────────────────────────────────────────────
 up:
-	docker compose up
+	OLLAMA_URL=http://ollama:11434 docker compose --profile bundled-ollama up
 
 up-d:
-	docker compose up -d
+	OLLAMA_URL=http://ollama:11434 docker compose --profile bundled-ollama up -d
 
 down:
-	docker compose down
+	docker compose --profile bundled-ollama down
 
 build:
-	docker compose build
+	docker compose --profile bundled-ollama build
 
 logs:
 	docker compose logs -f
 
 restart:
-	docker compose restart
+	OLLAMA_URL=http://ollama:11434 docker compose --profile bundled-ollama restart
 
 # ──────────────────────────────────────────────
 # Ollama モデル取得
