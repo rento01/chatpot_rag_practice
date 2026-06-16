@@ -9,6 +9,27 @@
 
 ---
 
+## 作業の進め方 (bolt 単位)
+
+このプロジェクトでは、各 Phase / Issue を **bolt** と呼ぶ小さな実装単位に
+分けてから着手します。
+
+- bolt 名は必ず **`bolt-0`, `bolt-1`, `bolt-2` …** の形式で表記する
+  （別表記 `bolt-zero` / `bolt_0` などは使わない）
+- 各 bolt で「何を作るか」「何を作らないか」「完了条件」「次の bolt への引き継ぎ」を
+  **実装前に整理** してから着手する
+- bolt 設計の手順・出力フォーマット・判断基準は
+  [`.claude/skills/bolt-planning/SKILL.md`](.claude/skills/bolt-planning/SKILL.md)
+  を参照すること
+- 1 bolt = 1 PR を原則とし、PR 本文の冒頭に bolt 設計（目的 / 作るもの /
+  作らないもの / 完了条件 / 引き継ぎ）を貼る
+- Phase の中で複数 bolt に分割される場合は、`bolt-0`, `bolt-1`, … と通し番号で扱う
+
+> ROAD_MAP.md には「Phase の地図」だけを書きます。bolt の詳細は PR 本文
+> （必要に応じて `docs/taskLog/`）に残し、ROAD_MAP は薄く保ちます。
+
+---
+
 ## Phase 0-1: 環境構築
 
 - Docker / Docker Compose のインストール
