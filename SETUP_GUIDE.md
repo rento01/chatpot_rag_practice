@@ -161,9 +161,24 @@ Ollama は **Docker Compose 内で動かす必要は必須ではありません*
 ホスト OS 側に Ollama を入れている場合は、コンテナ側を止めてホストの
 `ollama serve` を使うほうが、GPU・モデル管理が一段楽になります。
 
-### 6.1 接続先を host.docker.internal に向ける
+### 6.1 仕組み（backend からの接続先）
 
-ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を以下に変更します。
+`docker-compose.yml` の backend は以下のように書かれています。
+
+```yaml
+environment:
+  OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+```
+
+つまり **`.env` の `OLLAMA_URL` が設定されていればそれを使い、未設定なら
+compose 内の `ollama` サービスを向く** 動きです。
+ホスト側 Ollama に切り替える場合は、この仕組みを使って `.env` 側で
+`OLLAMA_URL` を上書きします。
+
+### 6.2 接続先を host.docker.internal に向ける
+
+ホスト OS で `ollama serve` を立ち上げてから、`.env` の `OLLAMA_URL`
+（既定ではコメントアウトされています）を以下のように有効化します。
 
 ```dotenv
 # .env
@@ -176,15 +191,19 @@ Linux の Docker でも近年は使えるようになっています
 （古い Linux Docker では `--add-host=host.docker.internal:host-gateway` が
 必要な場合があります）。
 
-### 6.2 backend だけ再起動して .env を反映
+### 6.3 backend だけ再起動して .env を反映
 
 `.env` を書き換えたら backend のみ再起動します。
+compose の `${OLLAMA_URL:-...}` は **起動時に評価される** ため、
+single restart ではなく `--force-recreate` で再生成する必要があります。
 
 ```bash
 docker compose up -d --force-recreate backend
 ```
 
-### 6.3 (任意) Docker Compose の ollama サービスを止める
+接続先が切り替わったかは `docker compose logs backend` で確認できます。
+
+### 6.4 (任意) Docker Compose の ollama サービスを止める
 
 ホスト側 Ollama を使う場合、`docker compose` の `ollama` コンテナは
 リソース節約のため止めても構いません。

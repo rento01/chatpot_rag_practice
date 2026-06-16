@@ -66,7 +66,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 ### 知っておきたい補足
 
 - **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `SETUP_GUIDE.md` §5）。
-- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に変更すれば、コンテナの backend からホスト側 Ollama に繋げます（詳細: `SETUP_GUIDE.md` §6）。
+- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に有効化（コメントアウトを外す）し、`docker compose up -d --force-recreate backend` で再生成すれば、コンテナの backend からホスト側 Ollama に繋がります（詳細: `SETUP_GUIDE.md` §6）。
 - **Makefile は任意の補助手段** です。`make up-d` / `make pull` などのショートカットを用意していますが、初学者向けの導線としては手打ちコマンドを優先しています。慣れたら Makefile を使ってください（詳細: `SETUP_GUIDE.md` §9）。
 
 ---
@@ -177,7 +177,7 @@ README.md
 | 変数 | 既定値 | 説明 |
 | --- | --- | --- |
 | `LLM_PROVIDER` | `ollama` | `ollama` か `bedrock` |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama エンドポイント。ホスト OS で動かす場合は `http://host.docker.internal:11434` |
+| `OLLAMA_URL` | (compose 内では `http://ollama:11434`) | Ollama エンドポイント。compose 内 Ollama を使う場合は未設定で OK / ホスト OS 側 Ollama を使う場合は `http://host.docker.internal:11434` |
 | `OLLAMA_MODEL` | `llama3.2` | チャット用モデル |
 | `EMBEDDING_MODEL` | `nomic-embed-text` | 埋め込み用モデル |
 | `VECTOR_DB_PROVIDER` | `chroma` | `chroma` か `opensearch` |
