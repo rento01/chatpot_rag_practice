@@ -72,7 +72,9 @@ services:
       - "8000:8000"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
-      OLLAMA_URL: http://ollama:11434
+      # OLLAMA_URL は .env で上書き可能（ホスト OS の `ollama serve` に
+      # 切り替えたい場合は .env で http://host.docker.internal:11434 を指定する）
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
       VECTOR_DB_PROVIDER: ${VECTOR_DB_PROVIDER:-chroma}
