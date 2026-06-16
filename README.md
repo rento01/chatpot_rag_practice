@@ -22,10 +22,67 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 - 抽象化は最小限。1 ファイルで処理が追える方を優先
 - 「初期状態では何ができないか」をコード中の `NotImplementedError` で明示
 - AWS 構成は Terraform にコメントとして残し、実装は Phase 7 で
+- **セットアップも `make` で隠さず、手打ちコマンドで何が起きているかを理解しながら進める**
 
 ---
 
-## 2. 使用技術スタック
+## 2. はじめて触る人がまずやること
+
+教材としては「中身を理解しながら動かす」ことを優先するため、
+**Makefile に頼らず Docker コマンドを手打ち** で進める導線を採っています。
+細かな手順は [`SETUP_GUIDE.md`](SETUP_GUIDE.md) にまとめてあるので、初回はそちらを開きながら作業してください。
+
+ざっくりの流れは次のとおりです。
+
+1. **前提ソフトのインストール**
+   - Docker Desktop と Ollama をインストールし、両方を起動状態にしておく
+   - 詳細: `SETUP_GUIDE.md` §1
+2. **`.env` の作成**
+   ```bash
+   cp .env.example .env
+   ```
+3. **コンテナ起動（手打ち）**
+   ```bash
+   docker compose up -d
+   docker compose ps
+   ```
+4. **Ollama モデルの取得（初回のみ）**
+   ```bash
+   docker compose exec ollama ollama pull llama3.2          # チャット用
+   docker compose exec ollama ollama pull nomic-embed-text  # Phase 3 用
+   ```
+5. **ブラウザで動作確認**
+   - http://localhost:3000 を開き、**RAG トグル OFF** でチャットを送信
+   - `/ingest` で PDF アップロード → ステータスは `error` で停止する（仕様。Phase 2-1 で実装するパス）
+6. **ログを眺める癖をつける**
+   ```bash
+   docker compose logs -f             # 全サービス
+   docker compose logs -f backend     # backend だけ
+   ```
+7. **次の学習に進む**
+   - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
+   - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
+
+### 知っておきたい補足
+
+- **初回の応答は遅くなることがあります。** ローカル LLM はモデルをメモリにロードしてから推論するため、最初の 1 回だけ数十秒〜数分かかることがあります。`docker compose logs -f backend` を眺めながら待ってください（詳細: `SETUP_GUIDE.md` §5）。
+- **Ollama は Docker の外でも構いません。** ホスト OS で `ollama serve` を立ち上げ、`.env` の `OLLAMA_URL` を `http://host.docker.internal:11434` に変更すれば、コンテナの backend からホスト側 Ollama に繋げます（詳細: `SETUP_GUIDE.md` §6）。
+- **Makefile は任意の補助手段** です。`make up-d` / `make pull` などのショートカットを用意していますが、初学者向けの導線としては手打ちコマンドを優先しています。慣れたら Makefile を使ってください（詳細: `SETUP_GUIDE.md` §9）。
+
+---
+
+## 3. 関連ドキュメント
+
+- [SETUP_GUIDE.md](SETUP_GUIDE.md) — Docker 手打ちコマンドでのセットアップ手順 / トラブルシュート
+- [ROAD_MAP.md](ROAD_MAP.md) — Phase 0-1 〜 Phase 8 の学習ロードマップ
+- [ISSUES.md](ISSUES.md) — 各 Phase の Issue 原稿
+- [terraform/main.tf](terraform/main.tf) — AWS 想定構成（コメント中心）
+- [.claude/skills/frontend-design/SKILL.md](.claude/skills/frontend-design/SKILL.md) — frontend design skill
+- [.claude/skills/bolt-planning/SKILL.md](.claude/skills/bolt-planning/SKILL.md) — bolt 単位で「何を作るか」を整理する skill
+
+---
+
+## 4. 使用技術スタック
 
 | 区分 | 技術 |
 | --- | --- |
@@ -40,7 +97,7 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 ---
 
-## 3. ディレクトリ構成
+## 5. ディレクトリ構成
 
 ```
 backend/
@@ -86,9 +143,11 @@ terraform/
 
 .claude/skills/
   frontend-design/      公式 frontend-design skill
+  bolt-planning/        bolt 単位で作業を整理する skill
 
 docs/                   学習ログや補足資料を置く場所
 
+SETUP_GUIDE.md          Docker 手打ちのセットアップ手順
 ROAD_MAP.md             Phase 0-1 〜 Phase 8 の学習ロードマップ
 ISSUES.md               Phase ごとの Issue 原稿
 CLAUDE.md               (空) プロジェクト固有の Claude 用メモを書く場所
@@ -97,29 +156,12 @@ README.md
 
 ---
 
-## 4. ローカル起動方法
+## 6. ローカル起動方法 (リファレンス)
 
-### 4.1 前提
+> 手順は §2 のとおり `SETUP_GUIDE.md` を参照してください。
+> ここではポート一覧と `.env` の主な変数だけまとめます。
 
-- Docker / Docker Compose
-- Ollama 用にローカル GPU を使う場合のみ NVIDIA Container Toolkit
-- （GPU が無くてもモデルを軽くすれば動きます）
-
-### 4.2 セットアップ
-
-```bash
-# 1. .env を作成
-cp .env.example .env
-
-# 2. コンテナを起動
-make up-d
-
-# 3. Ollama にチャット用と埋め込み用のモデルを取り込む
-make pull               # 既定: llama3.2
-make pull-embed         # 既定: nomic-embed-text
-```
-
-これで以下が立ち上がります。
+### 6.1 立ち上がるサービス
 
 | URL | 用途 |
 | --- | --- |
@@ -130,12 +172,12 @@ make pull-embed         # 既定: nomic-embed-text
 | http://localhost:11434 | Ollama |
 | postgres://localhost:5432 | PostgreSQL (chat/chat) |
 
-### 4.3 .env の主な変数
+### 6.2 .env の主な変数
 
 | 変数 | 既定値 | 説明 |
 | --- | --- | --- |
 | `LLM_PROVIDER` | `ollama` | `ollama` か `bedrock` |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama エンドポイント |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama エンドポイント。ホスト OS で動かす場合は `http://host.docker.internal:11434` |
 | `OLLAMA_MODEL` | `llama3.2` | チャット用モデル |
 | `EMBEDDING_MODEL` | `nomic-embed-text` | 埋め込み用モデル |
 | `VECTOR_DB_PROVIDER` | `chroma` | `chroma` か `opensearch` |
@@ -147,7 +189,7 @@ make pull-embed         # 既定: nomic-embed-text
 
 ---
 
-## 5. 現在の接続経路 (ローカル)
+## 7. 現在の接続経路 (ローカル)
 
 ```
 +---------------+     /api/*     +--------------+    HTTP    +-----------+
@@ -169,14 +211,14 @@ make pull-embed         # 既定: nomic-embed-text
 
 ---
 
-## 6. 通常チャットの流れ
+## 8. 通常チャットの流れ
 
 1. フロントの `ChatComposer` で **RAG トグルを OFF** にする
 2. メッセージを送ると `/chat` → `LLM_PROVIDER` の実装 (ollama) →
    ストリーミングでトークンが流れてくる
 3. 会話履歴は `conversations` / `messages` テーブルに保存される
 
-## 7. RAG モードの将来想定の流れ
+## 9. RAG モードの将来想定の流れ
 
 1. `/ingest` ページからコレクションを作り、PDF をアップロード
 2. backend が `rag.index_document` で **チャンク分割 + embedding + Vector DB upsert** を行う
@@ -188,7 +230,7 @@ make pull-embed         # 既定: nomic-embed-text
 
 ---
 
-## 8. AWS 移行時の想定
+## 10. AWS 移行時の想定
 
 詳しくは `terraform/main.tf` 内のコメントを参照。
 
@@ -198,23 +240,3 @@ make pull-embed         # 既定: nomic-embed-text
 - DB は **RDS for PostgreSQL** に切り替え (当面は backend 同居でも可)
 - 文書原本は **S3** に退避し、`documents.file_data` は S3 キーに置換
 - `apply` / `deploy` は **GitHub Actions + OIDC** で実施
-
----
-
-## 9. 初めて触る人がまずやること
-
-1. `make up-d && make pull && make pull-embed`
-2. http://localhost:3000 を開いて **RAG トグル OFF** でチャットを動かす
-3. `/ingest` でコレクションを作って PDF をアップロード
-   （ステータスは `error` になる。それで OK ）
-4. `ROAD_MAP.md` を読み、Phase 2-1 から実装に取りかかる
-5. 詰まったら `ISSUES.md` の各 Issue 原稿を参照する
-
----
-
-## 10. 関連ドキュメント
-
-- [ROAD_MAP.md](ROAD_MAP.md) — Phase 0-1 〜 Phase 8 の学習ロードマップ
-- [ISSUES.md](ISSUES.md) — 各 Phase の Issue 原稿
-- [terraform/main.tf](terraform/main.tf) — AWS 想定構成（コメント中心）
-- [.claude/skills/frontend-design/SKILL.md](.claude/skills/frontend-design/SKILL.md) — frontend design skill
