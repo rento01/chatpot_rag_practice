@@ -39,6 +39,7 @@ from backend.db import SessionLocal, get_db, run_migrations
 from backend.llm import get_chat_model
 from backend.logging_config import get_logger, setup_logging
 from backend.tracing import trace
+from backend.vector_db import get_vector_db
 
 # ──────────────────────────────────────────────
 # 初期化
@@ -210,8 +211,6 @@ def delete_collection(collection_id: int, db: DB) -> None:
         raise HTTPException(status_code=404, detail="コレクションが見つかりません")
     # Vector DB 側のコレクションも一緒に消す（ない場合は内部で握りつぶす）
     try:
-        from backend.vector_db import get_vector_db
-
         get_vector_db().delete_collection(collection_id)
     except Exception:
         logger.warning(
@@ -233,7 +232,7 @@ def _index_document(document_id: int, collection_id: int, file_data: bytes) -> N
     教材初期段階では `rag.index_document` が NotImplementedError なので、
     status を 'error' に倒して詳細をログに残すだけにしている。
     Phase 2-1 以降で `rag.index_document` を埋めれば、ここで取り込みが
-    完走するようになる。
+    完走するようになる（その時点でこの except NotImplementedError 節は削除可能）。
     """
     with SessionLocal() as db:
         doc = db.get(dm.Document, document_id)
@@ -247,10 +246,9 @@ def _index_document(document_id: int, collection_id: int, file_data: bytes) -> N
                 "index-document",
                 input={"document_id": document_id, "collection_id": collection_id},
             ):
-                # Phase 2-1 以降ではここで extract_text → split → upsert される。
-                rag.index_document(collection_id, document_id, file_data)
-                # 教材初期段階では reach できないが、本実装後に到達する想定。
-                _, page_count = rag.extract_text(file_data)
+                # Phase 2-1 以降ではここで extract_text → split → upsert され、
+                # ページ数を戻り値として受け取る契約にしている（PDF を 2 回パースしないため）
+                page_count = rag.index_document(collection_id, document_id, file_data)
 
                 doc = db.get(dm.Document, document_id)
                 if doc:
@@ -260,6 +258,7 @@ def _index_document(document_id: int, collection_id: int, file_data: bytes) -> N
                     db.commit()
         except NotImplementedError:
             # 教材初期段階の想定パス: rag.index_document が未実装
+            # → Phase 2-1 を完了させたらこの except 節ごと削ってよい
             logger.info(
                 "rag.index_document が未実装のため status=error にします "
                 "（Phase 2-1 で実装すれば取り込みが完走します）"
@@ -338,8 +337,6 @@ def delete_document(document_id: int, db: DB) -> None:
     if doc is None:
         raise HTTPException(status_code=404, detail="ドキュメントが見つかりません")
     try:
-        from backend.vector_db import get_vector_db
-
         get_vector_db().delete_document(doc.collection_id, document_id)
     except Exception:
         logger.warning(
@@ -366,10 +363,7 @@ def get_document_file(document_id: int, db: DB) -> Response:
 # ──────────────────────────────────────────────
 
 
-def _build_messages(
-    req: schemas.ChatRequest,
-    db: Session,
-) -> list[dict[str, str]]:
+def _build_messages(req: schemas.ChatRequest) -> list[dict[str, str]]:
     """LLM に渡すメッセージ列を組み立てる。
 
     use_rag=True かつ collection_id 指定時のみ RAG コンテキストを差し込む。
@@ -403,7 +397,7 @@ async def chat(req: schemas.ChatRequest, db: DB) -> StreamingResponse:
       2. user メッセージを DB に保存
       3. LLM ストリームを yield しつつ、終わったら assistant メッセージを保存
     """
-    messages = _build_messages(req, db)
+    messages = _build_messages(req)
 
     # user メッセージを履歴に追加
     if req.conversation_id is not None:

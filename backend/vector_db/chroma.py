@@ -7,6 +7,12 @@
 - delete 系
 だけ動く状態にし、検索系は NotImplementedError を投げて
 「次にここを実装するんだな」と分かるようにしてある。
+
+依存関係:
+  Phase 2-1: upsert を実装すると、初めて Chroma にデータが入る
+  Phase 2-2: search を実装すると、RAG モードでヒットが返るようになる
+  delete_document/delete_collection は upsert より前に呼ばれることはないが、
+    API ハンドラ側からは独立して叩かれるので先に動く形で残してある
 """
 
 from __future__ import annotations

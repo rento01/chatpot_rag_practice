@@ -65,18 +65,23 @@ def split_into_chunks(text: str) -> list[str]:
     return []
 
 
-def index_document(collection_id: int, document_id: int, file_data: bytes) -> None:
+def index_document(collection_id: int, document_id: int, file_data: bytes) -> int:
     """1 ドキュメントをチャンクに分割して VectorDB に投入する。
+
+    戻り値はページ数。`backend.main._index_document` がそのまま
+    `documents.page_count` に書き込むので、ここで 1 回 PDF をパースすれば足りる
+    （main 側で重ねて extract_text を呼ばないため）。
 
     Phase 2-1 で本格実装する想定。教材初期段階では
     extract_text までは動くが、VectorDB.upsert が未実装なので
     呼ぶと NotImplementedError になる。
     """
     # NOTE: Phase 2-1 で以下のような流れを実装する想定:
-    #   text, _ = extract_text(file_data)
+    #   text, page_count = extract_text(file_data)
     #   chunks = split_into_chunks(text)
     #   vdb = get_vector_db()
     #   vdb.upsert(collection_id, [Chunk(document_id=document_id, text=c) for c in chunks])
+    #   return page_count
     raise NotImplementedError(
         "index_document は Phase 2-1 (ファイル取り込み) で実装してください。"
     )

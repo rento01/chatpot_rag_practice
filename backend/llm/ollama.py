@@ -41,6 +41,9 @@ class OllamaChatModel(ChatModel):
 
         Ollama の `stream=True` は NDJSON 形式のレスポンスを返すため、
         1 行ずつパースして `message.content` を取り出す。
+
+        エラー時はログに残すだけで yield しない方針にしている。
+        ストリームに混ぜると、その文字列がそのまま会話履歴に保存されてしまうため。
         """
         payload = {
             "model": self.model,
@@ -64,10 +67,9 @@ class OllamaChatModel(ChatModel):
                         yield chunk
                     if data.get("done"):
                         break
-        except requests.RequestException as exc:
+        except requests.RequestException:
             logger.exception("Ollama チャット呼び出しに失敗しました")
-            # 教材では、エラー時もユーザに状況を見せる方針
-            yield f"\n[エラー] Ollama 呼び出しに失敗: {exc}"
+            # ストリームには何も流さない（呼び出し元では空応答 = 履歴に保存しない）
 
 
 # ──────────────────────────────────────────────

@@ -31,10 +31,12 @@ export default function ChatComposer({
 }: Props) {
   const [draft, setDraft] = useState('');
 
+  const needsCollection = useRag && selectedCollectionId === null;
+  const canSend = draft.trim() !== '' && !streaming && !needsCollection;
+
   const submit = () => {
-    const text = draft.trim();
-    if (!text || streaming) return;
-    onSend(text);
+    if (!canSend) return;
+    onSend(draft.trim());
     setDraft('');
   };
 
@@ -84,9 +86,9 @@ export default function ChatComposer({
           </select>
         </div>
 
-        {useRag && selectedCollectionId === null && (
+        {needsCollection && (
           <span style={{ color: 'var(--hot)' }}>
-            RAG モードにはコレクション選択が必要です
+            RAG モードにはコレクション選択が必要です（送信はコレクションを選んでから）
           </span>
         )}
       </div>
@@ -109,7 +111,7 @@ export default function ChatComposer({
             type="button"
             className="send-btn"
             onClick={submit}
-            disabled={!draft.trim()}
+            disabled={!canSend}
           >
             Send
           </button>
