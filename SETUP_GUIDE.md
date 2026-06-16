@@ -45,17 +45,67 @@ docker compose version
 
 ## 2. リポジトリの取得と .env 作成
 
-```bash
-git clone git@github.com:PlusValueLab/rag-chat-template.git
-cd rag-chat-template
+このリポジトリは **教材テンプレート** です。
+自分の学習用リポジトリを `PlusValueLab/{Name}-rag` の形で新規作成し、
+テンプレを「コピー元」として使う運用を想定しています。
 
+> `{Name}` は自分の名前 / プロジェクト識別子に置き換えてください。
+> 例: `taro-rag`, `pj-alpha-rag`
+
+### 2.1 テンプレを clone する
+
+まずはテンプレを手元にコピーします。
+
+```bash
+git clone git@github.com:PlusValueLab/rag-chat-template.git {Name}-rag
+cd {Name}-rag
+```
+
+### 2.2 PlusValueLab に自分用リポジトリを新規作成する
+
+GitHub の PlusValueLab Organization に、**空の** プライベートリポジトリ
+`PlusValueLab/{Name}-rag` を作成します。
+
+- README / .gitignore / LICENSE は **生成しない**（コミット衝突を避けるため）
+- 可視性は **Private** を推奨
+
+> 権限がない場合は Organization 管理者に作成してもらってください。
+
+### 2.3 履歴を切り離して初期コミットし直す
+
+テンプレ側の git 履歴は引きずらず、自分のリポジトリで **きれいな initial commit
+から始める** ために `.git` を削除してから git を初期化します。
+
+```bash
+# テンプレの履歴を切り離す
+rm -rf .git
+
+# 自分のリポジトリとして初期化
+git init -b main
+git add .
+git commit -m "chore: initial commit from rag-chat-template"
+
+# 新規作成した自分用リポジトリを remote に設定
+git remote add origin git@github.com:PlusValueLab/{Name}-rag.git
+git push -u origin main
+```
+
+> Windows PowerShell の場合は `rm -rf .git` の代わりに
+> `Remove-Item -Recurse -Force .git` を使ってください。
+
+### 2.4 .env を作成する
+
+```bash
 # .env を作成（中身は .env.example のコピーで OK）
 cp .env.example .env
 ```
 
 `.env` の主な変数は `README.md` の §「.env の主な変数」を参照してください。
-初期状態では編集不要ですが、§5 のように Ollama をホスト側で動かす場合は
-`OLLAMA_URL` を書き換えます。
+初期状態では編集不要ですが、§6 のように Ollama をホスト側で動かす場合は
+`OLLAMA_URL` を有効化します。
+
+> `.env` は `.gitignore` に入っているのでコミットされません。
+> `.env.example` は残しておくと、別の環境でセットアップするときに楽です。
 
 ---
 
