@@ -13,9 +13,9 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 - 初めて RAG に触れる社員が、**ローカル環境ですぐに開発学習を始められる**
 - 学習が進むほど、`backend/rag.py` と `backend/vector_db/chroma.py` を
-  読み・書きしていくことになる
+読み・書きしていくことになる
 - 将来 **AWS** に持って行く動線（Bedrock / OpenSearch / PrivateLink / OIDC）も
-  ディレクトリ・コメントとして用意してある
+ディレクトリ・コメントとして用意してある
 
 教材としての方針:
 
@@ -30,38 +30,38 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 教材としては「中身を理解しながら動かす」ことを優先するため、
 **Makefile に頼らず Docker コマンドを手打ち** で進める導線を採っています。
-細かな手順は [`SETUP_GUIDE.md`](SETUP_GUIDE.md) にまとめてあるので、初回はそちらを開きながら作業してください。
+細かな手順は `[SETUP_GUIDE.md](SETUP_GUIDE.md)` にまとめてあるので、初回はそちらを開きながら作業してください。
 
 ざっくりの流れは次のとおりです。
 
 1. **前提ソフトのインストール**
-   - Docker Desktop と Ollama をインストールし、両方を起動状態にしておく
-   - 詳細: `SETUP_GUIDE.md` §1
-2. **`.env` の作成**
-   ```bash
+  - Docker Desktop をインストールし、起動状態にしておく
+  - 詳細: `SETUP_GUIDE.md` §1
+2. `**.env` の作成**
+  ```bash
    cp .env.example .env
-   ```
+  ```
 3. **コンテナ起動（手打ち）**
-   ```bash
+  ```bash
    docker compose up -d
    docker compose ps
-   ```
+  ```
 4. **Ollama モデルの取得（初回のみ）**
-   ```bash
+  ```bash
    docker compose exec ollama ollama pull llama3.2          # チャット用
    docker compose exec ollama ollama pull nomic-embed-text  # Phase 3 用
-   ```
+  ```
 5. **ブラウザで動作確認**
-   - http://localhost:3000 を開き、**RAG トグル OFF** でチャットを送信
-   - `/ingest` で PDF アップロード → ステータスは `error` で停止する（仕様。Phase 2-1 で実装するパス）
+  - [http://localhost:3000](http://localhost:3000) を開き、**RAG トグル OFF** でチャットを送信
+  - `/ingest` で PDF アップロード → ステータスは `error` で停止する（仕様。Phase 2-1 で実装するパス）
 6. **ログを眺める癖をつける**
-   ```bash
+  ```bash
    docker compose logs -f             # 全サービス
    docker compose logs -f backend     # backend だけ
-   ```
+  ```
 7. **次の学習に進む**
-   - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
-   - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
+  - `ROAD_MAP.md` の Phase 2-1 から実装に取り掛かる
+  - 詰まったら `ISSUES.md` の Phase 別 Issue 原稿を参照
 
 ### 知っておきたい補足
 
@@ -84,16 +84,18 @@ RAG (Retrieval Augmented Generation) の構築を社内で学ぶための、
 
 ## 4. 使用技術スタック
 
-| 区分 | 技術 |
-| --- | --- |
-| Backend | Python 3.11+ / FastAPI / SQLAlchemy / alembic |
-| Frontend | Next.js (App Router) / React 19 |
-| DB | PostgreSQL (ローカルも AWS もコンテナ前提) |
-| Vector DB | ChromaDB (ローカル) / OpenSearch (AWS, 雛形のみ) |
-| LLM | Ollama (ローカル) / AWS Bedrock (AWS, 雛形のみ) |
-| トレース | Langfuse (任意, 初期は no-op) |
-| IaC | Terraform |
-| CI | GitHub Actions (将来は OIDC で apply/deploy 想定) |
+
+| 区分        | 技術                                            |
+| --------- | --------------------------------------------- |
+| Backend   | Python 3.11+ / FastAPI / SQLAlchemy / alembic |
+| Frontend  | Next.js (App Router) / React 19               |
+| DB        | PostgreSQL (ローカルも AWS もコンテナ前提)                |
+| Vector DB | ChromaDB (ローカル) / OpenSearch (AWS, 雛形のみ)      |
+| LLM       | Ollama (ローカル) / AWS Bedrock (AWS, 雛形のみ)       |
+| トレース      | Langfuse (任意, 初期は no-op)                      |
+| IaC       | Terraform                                     |
+| CI        | GitHub Actions (将来は OIDC で apply/deploy 想定)   |
+
 
 ---
 
@@ -163,29 +165,33 @@ README.md
 
 ### 6.1 立ち上がるサービス
 
-| URL | 用途 |
-| --- | --- |
-| http://localhost:3000 | フロントエンド (Next.js) |
-| http://localhost:8000 | バックエンド (FastAPI) |
-| http://localhost:8000/docs | OpenAPI Swagger UI |
-| http://localhost:8001 | ChromaDB |
-| http://localhost:11434 | Ollama |
-| postgres://localhost:5432 | PostgreSQL (chat/chat) |
+
+| URL                                                      | 用途                     |
+| -------------------------------------------------------- | ---------------------- |
+| [http://localhost:3000](http://localhost:3000)           | フロントエンド (Next.js)      |
+| [http://localhost:8000](http://localhost:8000)           | バックエンド (FastAPI)       |
+| [http://localhost:8000/docs](http://localhost:8000/docs) | OpenAPI Swagger UI     |
+| [http://localhost:8001](http://localhost:8001)           | ChromaDB               |
+| [http://localhost:11434](http://localhost:11434)         | Ollama                 |
+| postgres://localhost:5432                                | PostgreSQL (chat/chat) |
+
 
 ### 6.2 .env の主な変数
 
-| 変数 | 既定値 | 説明 |
-| --- | --- | --- |
-| `LLM_PROVIDER` | `ollama` | `ollama` か `bedrock` |
-| `OLLAMA_URL` | (compose 内では `http://ollama:11434`) | Ollama エンドポイント。compose 内 Ollama を使う場合は未設定で OK / ホスト OS 側 Ollama を使う場合は `http://host.docker.internal:11434` |
-| `OLLAMA_MODEL` | `llama3.2` | チャット用モデル |
-| `EMBEDDING_MODEL` | `nomic-embed-text` | 埋め込み用モデル |
-| `VECTOR_DB_PROVIDER` | `chroma` | `chroma` か `opensearch` |
-| `CHROMA_HOST` / `CHROMA_PORT` | `localhost` / `8001` | ChromaDB 接続先 |
-| `DATABASE_URL` | `postgresql+psycopg://chat:chat@localhost:5432/chat` | PostgreSQL 接続先 |
-| `MAX_UPLOAD_MB` | `50` | PDF アップロード上限 |
-| `LOG_LEVEL` | `INFO` | ログレベル |
-| `LANGFUSE_*` | (空) | Langfuse 用 (Phase 4 で設定) |
+
+| 変数                            | 既定値                                                  | 説明                                                                                                         |
+| ----------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `LLM_PROVIDER`                | `ollama`                                             | `ollama` か `bedrock`                                                                                       |
+| `OLLAMA_URL`                  | (compose 内では `http://ollama:11434`)                  | Ollama エンドポイント。compose 内 Ollama を使う場合は未設定で OK / ホスト OS 側 Ollama を使う場合は `http://host.docker.internal:11434` |
+| `OLLAMA_MODEL`                | `llama3.2`                                           | チャット用モデル                                                                                                   |
+| `EMBEDDING_MODEL`             | `nomic-embed-text`                                   | 埋め込み用モデル                                                                                                   |
+| `VECTOR_DB_PROVIDER`          | `chroma`                                             | `chroma` か `opensearch`                                                                                    |
+| `CHROMA_HOST` / `CHROMA_PORT` | `localhost` / `8001`                                 | ChromaDB 接続先                                                                                               |
+| `DATABASE_URL`                | `postgresql+psycopg://chat:chat@localhost:5432/chat` | PostgreSQL 接続先                                                                                             |
+| `MAX_UPLOAD_MB`               | `50`                                                 | PDF アップロード上限                                                                                               |
+| `LOG_LEVEL`                   | `INFO`                                               | ログレベル                                                                                                      |
+| `LANGFUSE_*`                  | (空)                                                  | Langfuse 用 (Phase 4 で設定)                                                                                   |
+
 
 ---
 
@@ -215,17 +221,17 @@ README.md
 
 1. フロントの `ChatComposer` で **RAG トグルを OFF** にする
 2. メッセージを送ると `/chat` → `LLM_PROVIDER` の実装 (ollama) →
-   ストリーミングでトークンが流れてくる
+  ストリーミングでトークンが流れてくる
 3. 会話履歴は `conversations` / `messages` テーブルに保存される
 
 ## 9. RAG モードの将来想定の流れ
 
 1. `/ingest` ページからコレクションを作り、PDF をアップロード
 2. backend が `rag.index_document` で **チャンク分割 + embedding + Vector DB upsert** を行う
-   - 教材初期段階ではここが `NotImplementedError`。Phase 2-1 で実装する
+  - 教材初期段階ではここが `NotImplementedError`。Phase 2-1 で実装する
 3. フロントで RAG トグルを ON にして、対象コレクションを選んで質問
 4. backend が `rag.build_context` で **検索 (BM25 / ベクトル / ハイブリッド)** をかけ、
-   ヒットしたチャンクを system プロンプトに同梱
+  ヒットしたチャンクを system プロンプトに同梱
 5. LLM がコンテキストに基づいて回答
 
 ---
@@ -240,3 +246,4 @@ README.md
 - DB は **RDS for PostgreSQL** に切り替え (当面は backend 同居でも可)
 - 文書原本は **S3** に退避し、`documents.file_data` は S3 キーに置換
 - `apply` / `deploy` は **GitHub Actions + OIDC** で実施
+
