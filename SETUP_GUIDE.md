@@ -45,6 +45,11 @@ ollama --version
 > ホスト OS 側の方が GPU や CPU リソースをそのまま使えて応答が速い場合が多いため、
 > このテンプレはホスト OS 起動を標準にしています（§6 参照）。
 
+> Linux 環境について: `docker-compose.yml` の backend に
+> `extra_hosts: ["host.docker.internal:host-gateway"]` を入れてあるので、
+> Linux Docker Engine でも `host.docker.internal` から
+> ホスト OS の Ollama (`localhost:11434`) に到達できます。
+
 ### 1.3 起動確認
 
 - Docker Desktop が起動していること（メニューバー / タスクトレイから確認）

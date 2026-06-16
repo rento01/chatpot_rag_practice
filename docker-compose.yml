@@ -77,11 +77,16 @@ services:
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
+    # Linux Docker でも host.docker.internal を解決できるようにする
+    # (Docker Desktop / Mac / Windows ではこの設定がなくても解決可能だが、
+    #  Linux Docker Engine では host-gateway を明示しないと解決されない)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
-      # OLLAMA_URL は .env で上書き可能（ホスト OS の `ollama serve` に
-      # 切り替えたい場合は .env で http://host.docker.internal:11434 を指定する）
-      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      # OLLAMA_URL は .env で上書き可能。
+      # 未設定時の既定はホスト OS 側 Ollama (Issue #29 でデフォルト化)
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
       VECTOR_DB_PROVIDER: ${VECTOR_DB_PROVIDER:-chroma}
