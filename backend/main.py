@@ -79,7 +79,9 @@ SYSTEM_RAG_NO_HIT = (
 
 
 # system プロンプトを LangChain の ChatPromptTemplate として宣言しておく。
+# ChatPromptTemplatesを使うと、複数メッセージを送れます。
 # RAG ヒット時のみ {context} 変数が埋め込まれる。会話履歴は MessagesPlaceholder
+# MessagesPlaceholderを使うことでテキストとしての変数ではなく、メッセージそのものを変数化できます。
 # でそのまま差し込む。`format_messages()` で BaseMessage 列に変換できる。
 GENERAL_PROMPT = ChatPromptTemplate.from_messages(
     [
