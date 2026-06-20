@@ -4,6 +4,8 @@ Bolt Design Template
 
 docs/design/
 
+⸻
+
 命名規則
 
 phase<phase番号>-bolt-<bolt番号>.md
@@ -62,11 +64,43 @@ bolt-Y: タイトル
 
 ⸻
 
-対象ファイル・ディレクトリ
+対象ファイル・修正箇所
 
-種別	ファイル
-書く	xxx
-読む（参照）	xxx
+ファイル	修正対象	変更内容
+xxx	xxx	xxx
+
+例
+
+ファイル	修正対象	変更内容
+backend/rag.py	extract_text()	PDFからテキスト抽出
+backend/vector_db/chroma.py	upsert()	ChromaDBへチャンク保存
+backend/main.py	_index_document()	インデックス処理追加
+
+⸻
+
+修正理由
+
+backend/rag.py
+
+対象
+
+* extract_text()
+
+理由
+
+* PDFからテキストを抽出する責務を持つため
+
+⸻
+
+backend/vector_db/chroma.py
+
+対象
+
+* upsert()
+
+理由
+
+* ChromaDBへの保存処理を担当するため
 
 ⸻
 
@@ -138,6 +172,8 @@ bolt-Y: タイトル
 * bolt を可能な限り小さくする
 * 作るものと作らないものを明確にする
 * 修正ファイルを明記する
+* 修正対象の関数・クラスを明記する
+* 修正理由を記載する
 * 完了条件を明記する
 * 確認事項・決定事項を残す
 * 後から見返して設計意図が分かる内容にする
