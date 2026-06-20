@@ -23,6 +23,54 @@ bolt-x
 
 ⸻
 
+ブランチ作成
+
+Issue内容と命名規則を確認し、
+
+適切なブランチ名を提案してください。
+
+命名規則
+
+* feature/<issue-number>-short-name
+
+* fix/<issue-number>-short-name
+
+* docs/<issue-number>-short-name
+
+* infra/<issue-number>-short-name
+
+出力内容
+
+* ブランチ名
+
+* 命名理由
+
+* 作成コマンド
+
+例
+
+ブランチ名
+
+feature/1-phase2-1-pdf-ingestion
+
+理由
+
+* feature = 新機能
+
+* Issue #1 対応
+
+* Phase 2-1 PDF取り込み機能
+
+作成コマンド
+
+git checkout main
+
+git pull origin main
+
+git checkout -b feature/1-phase2-1-pdf-ingestion
+
+⸻
+
 以下を実施してください
 
 1. 実装前確認
