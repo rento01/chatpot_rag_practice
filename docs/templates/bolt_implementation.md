@@ -43,6 +43,10 @@ Issue内容と命名規則を確認し、
 
 * ブランチ名
 
+* 推奨ブランチ名
+
+* 代替案（任意）
+
 * 命名理由
 
 * 作成コマンド
@@ -52,6 +56,11 @@ Issue内容と命名規則を確認し、
 ブランチ名
 
 feature/1-phase2-1-pdf-ingestion
+
+代替案（任意）
+
+* feature/1-pdf-ingestion
+* feature/phase2-1-pdf-ingestion
 
 理由
 
