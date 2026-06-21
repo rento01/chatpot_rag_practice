@@ -4,33 +4,42 @@ Requirements Template
 
 docs/design/
 
+⸻
+
 命名規則
 
 phase<phase番号>-requirements.md
 
 例
 
-phase2-1-requirements.md
-phase2-2-requirements.md
-phase3-1-requirements.md
+* phase2-1-requirements.md
+* phase2-2-requirements.md
+* phase3-1-requirements.md
 
 ⸻
 
 Phase X-X Requirements
 
-Phase情報
+Requirements Summary
 
-Phase: X-X
-
-タイトル:
-
-xxx
+項目	内容
+Phase	Phase X-X
+Issue	#xx
+タイトル	xxx
+目的	xxx
+対象範囲	xxx
+対象外	xxx
+完了条件数	xx
+次工程	Bolt Design
 
 ⸻
 
-対応Issue
+Phase情報
 
-#xx
+項目	内容
+Phase	X-X
+タイトル	xxx
+Issue	#xx
 
 ⸻
 
@@ -38,87 +47,137 @@ xxx
 
 なぜこの対応が必要なのか。
 
+Background
+
+* xxx
+* xxx
+
 ⸻
 
 目的
 
-このPhaseで達成したいこと。
+この Phase で達成したいこと。
+
+Objective
+
+* xxx
+* xxx
 
 ⸻
 
 要件
 
-* xxx
-* xxx
-* xxx
+この Phase で満たすべき要件を整理する。
+
+ID	要件
+R-01	xxx
+R-02	xxx
+R-03	xxx
 
 ⸻
 
 対象範囲
 
-今回対応する内容
+今回対応する内容。
 
-* xxx
-* xxx
+ID	内容
+S-01	xxx
+S-02	xxx
 
 ⸻
 
 対象外
 
-今回対応しない内容
+今回対応しない内容。
 
-* xxx
-* xxx
+ID	内容
+O-01	xxx
+O-02	xxx
 
 ⸻
 
 完了条件
 
-このPhaseが完了と判断できる条件
+この Phase が完了したと判断する条件。
 
-* xxx
-* xxx
+Acceptance Criteria
+
+ID	条件
+AC-01	xxx
+AC-02	xxx
+AC-03	xxx
 
 ⸻
 
 懸念事項
 
-設計・実装時に注意すべき事項
+設計・実装時に注意すべき事項。
 
-* xxx
+ID	内容	対応方針
+C-01	xxx	xxx
+C-02	xxx	xxx
 
 ⸻
 
 確認事項・決定事項
 
-設計中に発生した確認事項と、その結果決定した内容を記録する
+Requirements 作成時に発生した確認事項と決定事項を記録する。
 
-### 項目名
-確認内容
+Record
 
-決定内容
+項目	内容
+確認事項	xxx
+決定事項	xxx
+理由	xxx
+対応方針	xxx
 
-理由
+⸻
 
-対応方針
+Bolt設計への引き継ぎ
+
+Bolt 設計時に考慮すべき内容を記録する。
+
+Handover
+
+* xxx
+* xxx
 
 ⸻
 
 関連ドキュメント
 
-* Issue
-* 設計資料
-* 参考資料
+Issue
+
+* GitHub Issue #xx
+
+Related Documents
+
+* xxx
+* xxx
+
+Reference
+
+* xxx
+* xxx
 
 ⸻
 
 作成時のルール
 
-* Issueを読んで要件を整理する
-* 実装方法は書かない（bolt設計で整理する）
-* 不明点は確認事項・決定事項へ記載する
+* Issue を確認して要件を整理する
+* 実装方法は書かない
+* 実装ファイルは書かない
+* 実装方針は書かない
+* Bolt Design で設計を行う
+* 不明点は確認事項・決定事項へ記録する
 * 対象範囲と対象外を明確に分ける
-* 後から見返して目的が分かる内容にする
-* 設計中に決定した重要事項は確認事項・決定事項へ記載する
+* 要件は ID 管理する（R-01形式）
+* 完了条件は ID 管理する（AC-01形式）
+* 後続工程で追跡可能な粒度で記載する
+* Requirements にない内容を勝手に追加しない
+* Issue に記載のない内容を推測で追加しない
+* 不明点は確認事項へ記録する
+* 推測による判断は禁止
 * なぜその判断になったのか理由を残す
 * 後から見返して意思決定の経緯が分かる内容にする
+* Summary だけ読めば要件概要が把握できる状態にする

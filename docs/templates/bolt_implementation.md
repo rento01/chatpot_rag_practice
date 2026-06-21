@@ -259,3 +259,66 @@ Handover
 TaskLog Notes
 
 * xxx
+
+次工程
+
+実装完了後は以下の順序で進める。
+
+1. Code Review
+2. 必要であれば修正
+3. Implementation Report 作成
+4. TaskLog 作成
+5. Commit
+6. PR 作成
+
+⸻
+
+進行ルール
+
+各工程が完了したら、自動的に次工程へ進まないこと。
+
+必ず以下を実施すること。
+
+1. 完了報告
+
+* 実施内容
+* 確認結果
+* 残課題
+
+を整理して報告する。
+
+2. 次工程提案
+
+次に実施する工程を提案する。
+
+例
+
+* Code Review に進む
+* 修正対応を行う
+* Implementation Report を作成する
+* TaskLog を作成する
+* Commit を実施する
+* PR を作成する
+
+3. ユーザー確認
+
+次工程へ進む前に必ず確認する。
+
+例
+
+「Code Review に進みますか？」
+
+「Implementation Report を作成しますか？」
+
+「TaskLog を作成しますか？」
+
+4. 禁止事項
+
+ユーザー確認なしに以下を実施しないこと。
+
+* Code Review
+* 修正
+* Implementation Report 作成
+* TaskLog 作成
+* Commit
+* PR 作
