@@ -53,11 +53,21 @@ class ChromaVectorDB(VectorDB):
     """ChromaDB への薄いラッパ。"""
 
     def upsert(self, collection_id: int, chunks: Iterable[Chunk]) -> None:
-        # Phase 2 (キーワード検索) / Phase 3 (ベクトル検索) で実装する想定。
-        # NOTE: 実装時は chroma の collection.add(ids=..., documents=..., embeddings=..., metadatas=...) を使う。
-        raise NotImplementedError(
-            "ChromaVectorDB.upsert は Phase 2-1 (ファイル取り込み) で実装してください。"
-        )
+        chunk_list = list(chunks)
+        if not chunk_list:
+            return
+
+        col = _client().get_or_create_collection(_collection_name(collection_id))
+
+        ids = [f"doc_{c.document_id}_chunk_{i}" for i, c in enumerate(chunk_list)]
+        documents = [c.text for c in chunk_list]
+        metadatas = [{"document_id": c.document_id} for c in chunk_list]
+
+        # embedding が渡されている場合（Phase 3-1 以降）のみ embeddings を明示する。
+        # None のままの場合は Chroma のデフォルト埋め込み関数に任せる。
+        embeddings = [c.embedding for c in chunk_list] if any(c.embedding for c in chunk_list) else None
+
+        col.upsert(ids=ids, documents=documents, metadatas=metadatas, embeddings=embeddings)
 
     def search(
         self,

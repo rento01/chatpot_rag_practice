@@ -20,10 +20,12 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 from backend.logging_config import get_logger
 from backend.vector_db import get_vector_db
+from backend.vector_db.vectorDB import Chunk
 
 logger = get_logger(__name__)
 
@@ -57,12 +59,12 @@ def extract_text(file_data: bytes) -> tuple[str, int]:
 def split_into_chunks(text: str) -> list[str]:
     """テキストをチャンクに分割する。
 
-    教材初期段階では実装しない。Phase 2-1 で
-    `langchain_text_splitters.RecursiveCharacterTextSplitter` などを
-    使って実装する想定。
+    Phase 2 では固定長で OK なので、RecursiveCharacterTextSplitter を
+    シンプルな設定で使う。chunk_overlap=50 は前後の文脈が切れにくくするため。
+    Phase 5 でチャンク分割を改善する想定。
     """
-    # NOTE: ここを Phase 2-1 で実装する。
-    return []
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    return splitter.split_text(text)
 
 
 def index_document(collection_id: int, document_id: int, file_data: bytes) -> int:
@@ -71,20 +73,19 @@ def index_document(collection_id: int, document_id: int, file_data: bytes) -> in
     戻り値はページ数。`backend.main._index_document` がそのまま
     `documents.page_count` に書き込むので、ここで 1 回 PDF をパースすれば足りる
     （main 側で重ねて extract_text を呼ばないため）。
-
-    Phase 2-1 で本格実装する想定。教材初期段階では
-    extract_text までは動くが、VectorDB.upsert が未実装なので
-    呼ぶと NotImplementedError になる。
     """
-    # NOTE: Phase 2-1 で以下のような流れを実装する想定:
-    #   text, page_count = extract_text(file_data)
-    #   chunks = split_into_chunks(text)
-    #   vdb = get_vector_db()
-    #   vdb.upsert(collection_id, [Chunk(document_id=document_id, text=c) for c in chunks])
-    #   return page_count
-    raise NotImplementedError(
-        "index_document は Phase 2-1 (ファイル取り込み) で実装してください。"
-    )
+    text, page_count = extract_text(file_data)
+    chunks = split_into_chunks(text)
+
+    # スキャン PDF など、テキストが抽出できなかった場合は upsert をスキップする。
+    if chunks:
+        vdb = get_vector_db()
+        vdb.upsert(
+            collection_id,
+            [Chunk(document_id=document_id, text=c) for c in chunks],
+        )
+
+    return page_count
 
 
 # ──────────────────────────────────────────────
