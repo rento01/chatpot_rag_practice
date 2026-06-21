@@ -138,7 +138,8 @@ Phase 2-2（キーワード検索）に進める土台を作る。
 ## 関連コミット
 
 ```text
-（作成予定）
+a152e33 feat(phase2-1): implement PDF ingest pipeline
+4c03223 docs(templates): add and update development workflow templates
 ```
 
 ---
@@ -146,5 +147,5 @@ Phase 2-2（キーワード検索）に進める土台を作る。
 ## 関連PR
 
 ```
-（作成予定）
+https://github.com/rento01/chatpot_rag_practice/pull/8
 ```
