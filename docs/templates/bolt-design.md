@@ -12,24 +12,57 @@ phase<phase番号>-bolt-<bolt番号>.md
 
 例
 
-phase2-1-bolt-0.md
-
-phase2-1-bolt-1.md
-
-phase3-1-bolt-0.md
+* phase2-1-bolt-0.md
+* phase2-1-bolt-1.md
+* phase3-1-bolt-0.md
 
 ⸻
 
 Phase X-X bolt-Y 設計
 
+Design Summary
+
+項目	内容
+Phase	Phase X-X
+Bolt	bolt-Y
+Issue	#xx
+目的	xxx
+作るもの	xxx
+作らないもの	xxx
+完了条件	xxx
+次Bolt	bolt-x / なし
+
+⸻
+
+Requirements Summary
+
+今回対応する Requirements の要点を整理する。
+
+対応対象
+
+* xxx
+* xxx
+
+対応対象外
+
+* xxx
+* xxx
+
+⸻
+
 bolt分割判定
 
-分割要否を記載する。
+判定
 
-例
+* 分割不要
+* bolt-0 のみで対応
 
-* 分割不要。bolt-0 のみで進める
-* bolt-0 / bolt-1 に分割する
+または
+
+* bolt-0
+* bolt-1
+
+へ分割
 
 理由
 
@@ -44,11 +77,14 @@ bolt-Y: タイトル
 
 この bolt で達成すること。
 
+* xxx
+* xxx
+
 ⸻
 
 作るもの
 
-実装対象。
+今回実装する対象。
 
 * xxx
 * xxx
@@ -57,7 +93,7 @@ bolt-Y: タイトル
 
 作らないもの
 
-今回対応しない内容。
+今回実装しない対象。
 
 * xxx
 * xxx
@@ -67,14 +103,15 @@ bolt-Y: タイトル
 対象ファイル・修正箇所
 
 ファイル	修正対象	変更内容
-xxx	xxx	xxx
+xxx.py	xxx()	xxx
+xxx.py	xxxClass	xxx
 
 例
 
 ファイル	修正対象	変更内容
 backend/rag.py	extract_text()	PDFからテキスト抽出
-backend/vector_db/chroma.py	upsert()	ChromaDBへチャンク保存
-backend/main.py	_index_document()	インデックス処理追加
+backend/vector_db/chroma.py	upsert()	ChromaDBへ保存
+backend/main.py	_index_document()	Index処理追加
 
 ⸻
 
@@ -88,7 +125,7 @@ backend/rag.py
 
 理由
 
-* PDFからテキストを抽出する責務を持つため
+* PDFからテキスト抽出を担当する責務のため
 
 ⸻
 
@@ -100,7 +137,7 @@ backend/vector_db/chroma.py
 
 理由
 
-* ChromaDBへの保存処理を担当するため
+* ChromaDB保存処理を担当する責務のため
 
 ⸻
 
@@ -108,8 +145,25 @@ backend/vector_db/chroma.py
 
 どのような方針で実装するか。
 
+方針
+
 * xxx
 * xxx
+
+採用理由
+
+* xxx
+* xxx
+
+⸻
+
+設計判断
+
+設計時点で決定した内容を記録する。
+
+項目	判断	理由
+xxx	xxx	xxx
+xxx	xxx	xxx
 
 ⸻
 
@@ -117,8 +171,16 @@ backend/vector_db/chroma.py
 
 この bolt が完了したと判断できる条件。
 
+Functional
+
 * xxx
 * xxx
+
+Verification
+
+* API確認
+* 動作確認
+* エラー確認
 
 ⸻
 
@@ -126,41 +188,55 @@ backend/vector_db/chroma.py
 
 設計・実装時に注意すべき事項。
 
-* xxx
+項目	内容	対応方針
+xxx	xxx	xxx
 
 ⸻
 
 確認事項・決定事項
 
-項目名
+実装前に確認が必要な内容を整理する。
 
-確認内容
-
-決定内容
-
-理由
-
-対応方針
+項目	内容
+確認事項	xxx
+決定事項	xxx
+理由	xxx
+対応方針	xxx
 
 ⸻
 
 ドキュメント更新
 
-更新対象のドキュメント。
+更新対象ドキュメント。
 
-* xxx
-* xxx
+ドキュメント	更新内容
+xxx	xxx
+xxx	xxx
 
 ⸻
 
 次の bolt への引き継ぎ
 
-なし
-
-または
+Handover
 
 * bolt-1 で対応
 * Phase X-X で対応
+
+または
+
+* なし
+
+⸻
+
+References
+
+Requirements
+
+* docs/design/phaseX-X-requirements.md
+
+Related Issues
+
+* GitHub Issue #xx
 
 ⸻
 
@@ -176,4 +252,9 @@ backend/vector_db/chroma.py
 * 修正理由を記載する
 * 完了条件を明記する
 * 確認事項・決定事項を残す
+* 設計判断を記録する
+* Requirements にない内容を勝手に追加しない
+* 不明点は確認事項へ記録する
+* 推測による判断は禁止
 * 後から見返して設計意図が分かる内容にする
+* Summary だけ読めば設計内容が把握できる状態にする
