@@ -38,7 +38,7 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - chromadb_data:/chroma/chroma
+      - chromadb_data:/data
       - ./chroma-config.yaml:/config.yaml
     environment:
       IS_PERSISTENT: "TRUE"
