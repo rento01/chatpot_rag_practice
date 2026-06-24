@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import Iterable
 
 import chromadb
+from rank_bm25 import BM25Okapi
 
 from backend.config import settings
 from backend.logging_config import get_logger
@@ -42,6 +43,18 @@ def _client() -> chromadb.HttpClient:
 def _collection_name(collection_id: int) -> str:
     """コレクションIDからChroma上のコレクション名を作る。"""
     return f"col_{collection_id}"
+
+
+def _bigram(text: str) -> list[str]:
+    """文字 bigram でトークナイズする。
+
+    日本語は空白分割では単語が切れないため、2 文字ずつスライドさせて
+    トークン列を作る。1 文字の場合はその 1 文字をそのまま返す。
+    """
+    text = text.lower()
+    if len(text) < 2:
+        return [text] if text else []
+    return [text[i : i + 2] for i in range(len(text) - 1)]
 
 
 # ──────────────────────────────────────────────
@@ -75,10 +88,38 @@ class ChromaVectorDB(VectorDB):
         query: str,
         top_k: int = 5,
     ) -> list[SearchResult]:
-        # Phase 2-2 (キーワード検索) → Phase 3-2 (ベクトル検索) で実装する想定。
-        raise NotImplementedError(
-            "ChromaVectorDB.search は Phase 2-2 (キーワード検索) で実装してください。"
-        )
+        # コレクションが存在しない場合（ドキュメント未登録など）は空リストを返す。
+        try:
+            col = _client().get_collection(_collection_name(collection_id))
+        except Exception:
+            return []
+
+        result = col.get()
+        documents: list[str] = result.get("documents") or []
+        metadatas: list[dict] = result.get("metadatas") or []
+
+        if not documents:
+            return []
+
+        # 文字 bigram でトークナイズし BM25 スコアを算出する。
+        # 日本語は空白で単語が切れないため、文字単位のスライドウィンドウで対応する。
+        # Phase 2-2 では「まず動かして観察する」方針のため形態素解析は導入しない。
+        tokenized_corpus = [_bigram(doc) for doc in documents]
+        scores = BM25Okapi(tokenized_corpus).get_scores(_bigram(query))
+
+        # score > 0 のものだけを有効ヒットとして上位 top_k 件返す。
+        ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+        hits = [(i, s) for i, s in ranked if s > 0][:top_k]
+
+        return [
+            SearchResult(
+                document_id=metadatas[i].get("document_id", 0),
+                text=documents[i],
+                score=float(score),
+                metadata=metadatas[i],
+            )
+            for i, score in hits
+        ]
 
     def delete_collection(self, collection_id: int) -> None:
         """コレクションを物理削除する。
