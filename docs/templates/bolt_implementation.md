@@ -122,7 +122,7 @@ bolt 設計に従って実装してください。
 
 ⸻
 
-3. 実装後報告
+3. 実装結果整理
 
 変更内容
 
@@ -264,12 +264,109 @@ TaskLog Notes
 
 実装完了後は以下の順序で進める。
 
-1. Code Review
-2. 必要であれば修正
-3. Implementation Report 作成
-4. TaskLog 作成
-5. Commit
-6. PR 作成
+1. WorkLog 更新
+2. git diff 確認（Claude確認）
+3. 動作確認（人間確認）
+4. Code Review
+5. 必要であれば修正
+6. 再度動作確認（人間確認）
+7. WorkLog 最終更新
+8. TaskLog 作成
+9. Commit
+10. Push
+11. PR 本文を作成する
+12. PR 作成
+
+
+⸻
+
+WorkLog 運用ルール
+
+WorkLog は作業中の記録として扱う。
+
+TaskLog の下書きではなく、以下を記録するために使用する。
+
+* 実装前の調査内容
+* 実装中の判断
+* 発生した問題
+* エラー対応内容
+* 作業再開時に必要な情報
+
+作成タイミング
+
+* feature ブランチ作成後
+* 実装開始前
+
+更新タイミング
+
+* 実装完了時
+* Code Review 完了時
+* 作業を中断する場合
+* 別日に作業を再開する場合
+* Claude Code のセッションが終了する可能性がある場合
+
+実装完了時は、Claude が WorkLog を更新したうえで、
+以下を次工程として提案する。
+
+1. git diff 確認
+2. 動作確認
+
+例
+
+実装が完了しました。
+
+WorkLog を更新しました。
+
+更新内容
+
+* 実装ログ反映
+* エラー対応ログ反映
+* 調査結果反映
+
+次工程として以下を推奨します。
+
+1. git diff 確認
+2. 動作確認
+
+実施しますか？
+
+例
+
+Code Review が完了しました。
+
+WorkLog を最終更新しました。
+
+更新内容
+
+* Review Findings反映
+* 残課題更新
+* 次回作業更新
+
+次工程として以下を推奨します。
+
+1. TaskLog 作成
+
+実施しますか？
+
+TaskLog 作成後は、Claude が以下を次工程として提案する。
+
+1. Commit
+2. Push
+3. PR 本文作成
+4. PR 作成
+
+例
+
+「TaskLog が作成されました。
+
+次工程として以下を推奨します。
+
+1. Commit
+2. Push
+3. PR 本文作成
+4. PR 作成
+
+実施しますか？」
 
 ⸻
 
@@ -287,17 +384,35 @@ TaskLog Notes
 
 を整理して報告する。
 
+WorkLog更新
+
+git diff確認
+
+動作確認
+
+については、
+
+Claude が必要と判断した場合は
+ユーザー確認なしに実施してよい。
+
+ただし結果は必ず報告する。
+
 2. 次工程提案
 
 次に実施する工程を提案する。
 
 例
 
+* WorkLog を更新する
+* git diff 確認を行う（Claude確認）
+* 動作確認を行う（人間確認）
 * Code Review に進む
 * 修正対応を行う
-* Implementation Report を作成する
+* WorkLog を最終更新する
 * TaskLog を作成する
 * Commit を実施する
+* Push を実施する
+* PR 本文を作成する
 * PR を作成する
 
 3. ユーザー確認
@@ -308,9 +423,13 @@ TaskLog Notes
 
 「Code Review に進みますか？」
 
-「Implementation Report を作成しますか？」
-
 「TaskLog を作成しますか？」
+
+「Commit を実施しますか？」
+
+「PR 本文を作成しますか？」
+
+「PR を作成しますか？」
 
 4. 禁止事項
 
@@ -318,7 +437,9 @@ TaskLog Notes
 
 * Code Review
 * 修正
-* Implementation Report 作成
 * TaskLog 作成
 * Commit
-* PR 作
+* Push
+* PR 本文作成
+* PR 作成
+* Merge

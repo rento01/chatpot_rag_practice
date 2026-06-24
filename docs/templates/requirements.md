@@ -96,11 +96,22 @@ O-02	xxx
 
 ⸻
 
+## テスト観点
+
+ID | 内容
+---|---
+T-01 | xxx
+T-02 | xxx
+
+⸻
+
 完了条件
 
-この Phase が完了したと判断する条件。
+Issue #2 の完了条件を具体化したものを以下に記載する。
 
-Acceptance Criteria
+⸻
+
+### Acceptance Criteria
 
 ID	条件
 AC-01	xxx

@@ -2,7 +2,17 @@ TaskLog Template
 
 目的
 
-今回の作業内容を学習ログとして記録する。
+今回の bolt の最終成果を記録する。
+
+実装内容だけでなく、
+
+* 実装判断
+* レビュー結果
+* 発生した問題
+* 学習内容
+* 次 bolt への引き継ぎ
+
+を残し、後から振り返り可能な状態にする。
 
 ⸻
 
@@ -30,7 +40,7 @@ Phase X-X bolt-Y
 実施内容	xxx
 変更ファイル	xxx
 動作確認	PASS / FAIL
-AIレビュー	Approve / Request Changes
+Code Review	Approve / Request Changes
 課題	xxx
 次の対応	xxx
 
@@ -118,6 +128,26 @@ xxx
 
 ⸻
 
+設計との差異
+
+設計時との変更点を記録する。
+
+差異内容
+
+* xxx
+* xxx
+
+理由
+
+* xxx
+* xxx
+
+差異がない場合
+
+なし
+
+⸻
+
 動作確認
 
 実施内容
@@ -137,7 +167,7 @@ UI確認	PASS
 
 ⸻
 
-AIレビュー結果
+Code Review 結果
 
 Summary
 
@@ -165,6 +195,19 @@ Review Findings の対応
 指摘	判断	理由
 xxx	Remaining Issues	xxx
 xxx	GitHub Issue	#xx
+
+⸻
+
+発生した問題と対応
+
+実装中に発生した問題と解決内容を記録する。
+
+問題	原因	対応
+xxx	xxx	xxx
+
+問題がない場合
+
+なし
 
 ⸻
 
@@ -213,10 +256,6 @@ Bolt Design
 
 * docs/design/phaseX-X-bolt-Y.md
 
-Implementation Report
-
-* docs/implementation/phaseX-X-bolt-Y.md
-
 Code Review
 
 * docs/review/phaseX-X-bolt-Y.md
@@ -239,10 +278,11 @@ PR URL
 
 * 学習した内容を必ず残す
 * なぜその実装にしたかを書く
+* 設計との差異を残す
 * Review Findings の判断を残す
+* 発生した問題と対応を記録する
 * GitHub Issue の有無を記録する
 * 次の bolt が迷わないように引き継ぎを書く
 * 後から見返して理解できる内容にする
 * Claude Code が生成しても人間が読める形にする
-* Implementation Report と矛盾しない内容にする
 * サマリーだけ読めば作業内容が把握できる状態にする
