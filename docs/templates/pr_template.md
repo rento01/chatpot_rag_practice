@@ -24,7 +24,17 @@ Bolt	bolt-x
 Issue	#xx
 変更内容	xxx
 動作確認	PASS / FAIL
+実装判断	xxx
+残課題	xxx
 Review対象	xxx
+
+⸻
+
+Scope Check
+
+項目	結果
+Requirements Scope Only	Yes
+Out Of Scope Included	No
 
 ⸻
 
@@ -80,6 +90,22 @@ API起動	PASS
 
 ⸻
 
+Code Review 結果
+
+項目	結果
+Requirements整合性	PASS
+設計整合性	PASS
+可読性	PASS
+保守性	PASS
+エラーハンドリング	PASS
+
+Review Findings
+
+* xxx
+* xxx
+
+⸻
+
 レビュー観点
 
 特に確認してほしいポイント。
@@ -117,10 +143,6 @@ Code Review
 
 * docs/review/phaseX-X-bolt-Y.md
 
-Implementation Report
-
-* docs/implementation/phaseX-X-bolt-Y.md
-
 ⸻
 
 補足事項
@@ -138,7 +160,8 @@ Implementation Report
 * 動作確認方法を記載する
 * 関連Issueを明記する
 * 関連TaskLogを記載する
-* ドキュメントとの整合性を保つ
+* Requirements・Bolt Design・Code Reviewとの整合性を保つ
 * 実装内容を簡潔にまとめる
 * 推測による判断は禁止
-* PR Summary だけ読めば概要が分かる状態にする
+* PR Summaryだけ読めば概要が分かる状態にする
+* 実装判断と残課題を明記する

@@ -162,6 +162,16 @@ F-03	Low	xxx	任意対応
 
 ⸻
 
+## Remaining Issues
+
+今回対応しない課題
+
+ID | 内容 | 理由 | 対応予定
+---|---|---|---
+RI-01 | xxx | xxx | Phase3
+
+⸻
+
 Recommendations
 
 * xxx

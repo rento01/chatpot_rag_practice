@@ -71,6 +71,48 @@ bolt分割判定
 
 ⸻
 
+データフロー
+
+今回の処理の流れを整理する。
+
+Flow
+
+xxx
+↓
+xxx
+↓
+xxx
+
+例
+
+PDF
+↓
+extract_text
+↓
+Chunk
+↓
+upsert
+↓
+ChromaDB
+
+⸻
+
+影響範囲
+
+今回の変更が影響する範囲を整理する。
+
+対象
+
+* xxx
+* xxx
+
+影響なし
+
+* xxx
+* xxx
+
+⸻
+
 bolt-Y: タイトル
 
 目的
@@ -102,42 +144,7 @@ bolt-Y: タイトル
 
 対象ファイル・修正箇所
 
-ファイル	修正対象	変更内容
-xxx.py	xxx()	xxx
-xxx.py	xxxClass	xxx
-
-例
-
-ファイル	修正対象	変更内容
-backend/rag.py	extract_text()	PDFからテキスト抽出
-backend/vector_db/chroma.py	upsert()	ChromaDBへ保存
-backend/main.py	_index_document()	Index処理追加
-
-⸻
-
-修正理由
-
-backend/rag.py
-
-対象
-
-* extract_text()
-
-理由
-
-* PDFからテキスト抽出を担当する責務のため
-
-⸻
-
-backend/vector_db/chroma.py
-
-対象
-
-* upsert()
-
-理由
-
-* ChromaDB保存処理を担当する責務のため
+ファイル | 修正対象 | 変更内容 | 理由
 
 ⸻
 
@@ -157,13 +164,25 @@ backend/vector_db/chroma.py
 
 ⸻
 
+テスト観点
+
+実装後に確認すべき観点を整理する。
+
+ID | 内容
+---|---
+T-01 | xxx
+T-02 | xxx
+T-03 | xxx
+
+⸻
+
 設計判断
 
-設計時点で決定した内容を記録する。
+設計時点で採用した判断と見送った代替案を記録する。
 
-項目	判断	理由
-xxx	xxx	xxx
-xxx	xxx	xxx
+項目	判断	理由	代替案
+xxx	xxx	xxx	xxx
+xxx	xxx	xxx	xxx
 
 ⸻
 
@@ -190,6 +209,17 @@ Verification
 
 項目	内容	対応方針
 xxx	xxx	xxx
+
+⸻
+
+Remaining Issues
+
+今回の bolt では対応しない課題を記録する。
+
+ID | 内容 | 対応予定 | 再検討条件
+---|---|---|---
+RI-01 | xxx | Phase X-X | xxx
+RI-02 | xxx | Future | xxx
 
 ⸻
 
