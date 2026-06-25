@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
+from backend.llm import get_embed_model
 from backend.logging_config import get_logger
 from backend.vector_db import get_vector_db
 from backend.vector_db.vectorDB import Chunk
@@ -79,10 +80,23 @@ def index_document(collection_id: int, document_id: int, file_data: bytes) -> in
 
     # スキャン PDF など、テキストが抽出できなかった場合は upsert をスキップする。
     if chunks:
+        # embedding 生成。失敗時は warning ログを出して embedding=None のままフォールバックし、
+        # upsert 自体は継続する（BM25 キーワード検索は embedding なしでも動作するため）。
+        logger.info("embedding 生成を開始: %d チャンク", len(chunks))
+        try:
+            embeddings: list[list[float] | None] = get_embed_model().embed(chunks)
+            logger.info("embedding 生成を完了: %d チャンク", len(chunks))
+        except Exception:
+            logger.warning(
+                "embedding 生成に失敗しました。embedding なしで upsert を継続します",
+                exc_info=True,
+            )
+            embeddings = [None] * len(chunks)
+
         vdb = get_vector_db()
         vdb.upsert(
             collection_id,
-            [Chunk(document_id=document_id, text=c) for c in chunks],
+            [Chunk(document_id=document_id, text=c, embedding=e) for c, e in zip(chunks, embeddings)],
         )
 
     return page_count
