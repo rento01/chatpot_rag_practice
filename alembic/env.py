@@ -20,7 +20,10 @@ if (db_url := os.getenv("DATABASE_URL")):
     config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False を明示して uvicorn などの既存ロガーを無効化しない。
+    # デフォルト(True)のままだと FastAPI 起動中に alembic が migrate するとき
+    # uvicorn のロガーが無効化され、起動後のすべてのログが docker logs に出なくなる。
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 
