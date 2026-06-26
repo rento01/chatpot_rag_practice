@@ -210,4 +210,4 @@ Approve
 
 ## 関連 PR
 
-（PR 作成後に記録）
+https://github.com/rento01/chatpot_rag_practice/pull/32
