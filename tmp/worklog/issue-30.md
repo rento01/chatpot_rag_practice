@@ -11,6 +11,15 @@
 
 ---
 
+## TODO・メモ
+
+- [x] alembic fileConfig の disable_existing_loggers を調査
+- [x] logging_config.py の basicConfig(force=True) を修正
+- [x] main.py lifespan でログレベル復元
+- [x] AC-01〜04 動作確認
+
+---
+
 ## 1. 作業目的
 
 ### 今回の目的
