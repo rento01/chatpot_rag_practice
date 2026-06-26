@@ -6,6 +6,7 @@ uvicorn のロガーとフォーマットを揃える。
 
 import logging
 import os
+import sys
 
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 _initialized = False
@@ -20,7 +21,14 @@ def setup_logging() -> None:
     level_name = os.getenv("LOG_LEVEL", "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
 
-    logging.basicConfig(level=level, format=_LOG_FORMAT, force=True)
+    # basicConfig(force=True) は uvicorn の dictConfig と競合しログが消えるため使わない。
+    # root logger にハンドラが未設定の場合のみ追加し、uvicorn の設定と共存させる。
+    root = logging.getLogger()
+    if not root.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        root.addHandler(handler)
+    root.setLevel(level)
 
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
         logging.getLogger(name).setLevel(level)
