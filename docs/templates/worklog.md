@@ -205,9 +205,60 @@ backend/vector_db/chroma.py
 
 ## 5. Diff Review
 
-### 変更ファイル
+### 実施コマンド
+
+```bash
+git status
+git diff
+git diff --stat
+```
+
+### 変更ファイル一覧
 
 - `ファイル名`（+N 行 / -N 行）
+
+例:
+- `backend/logging_config.py`
+- `backend/main.py`
+
+### ファイル別の変更内容
+
+変更ファイルごとに、何を変更したかを自分の言葉で記載する。
+
+例:
+
+`backend/logging_config.py`
+
+- `logging.basicConfig(force=True)` を削除した
+- root logger に handler が存在しない場合のみ `StreamHandler` を追加する形に変更した
+- `LOG_LEVEL` を環境変数から取得するようにした
+
+理由:
+
+- uvicorn の logging 設定と競合しないようにするため
+- Docker 環境では標準出力へログを出す構成が実務寄りのため
+
+### 変更コード
+
+重要な変更について、変更前・変更後のコードを記載する。
+
+**変更前**
+
+```python
+# 変更前のコード
+```
+
+**変更後**
+
+```python
+# 変更後のコード
+```
+
+**補足**
+
+- なぜこの変更にしたのか
+- 設計・レビューでの判断理由
+- 実装時の注意点
 
 ### 意図した変更
 
@@ -218,6 +269,18 @@ backend/vector_db/chroma.py
 - query 処理追加
 - SearchResult 変換追加
 
+### 意図していない変更がないか
+
+以下を確認する。
+
+- 関係ないファイルが変更されていないか
+- フォーマットだけの変更が大量に入っていないか
+- 不要なコメントやデバッグコードが残っていないか
+- `.env` や秘密情報が含まれていないか
+- 一時ファイルやキャッシュが含まれていないか
+
+**確認結果**: なし
+
 ### 削除した処理
 
 削除・置き換えした処理を列挙する。
@@ -225,6 +288,14 @@ backend/vector_db/chroma.py
 例:
 - NotImplementedError 削除
 - ハードコードされた定数を設定値に変更
+
+### 差分メモ
+
+diff を確認して気付いたことやレビュー時に残したい内容を記載する。
+
+例:
+- `force=True` を廃止し、既存 Handler を保持する実装へ変更
+- Docker は標準出力へログを出力する運用のため FileHandler は追加していない
 
 ### 想定外変更
 

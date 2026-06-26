@@ -13,6 +13,7 @@ router は分割しない。1ファイルでルーティングを追える方が
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Annotated
@@ -112,6 +113,10 @@ RAG_NO_HIT_PROMPT = ChatPromptTemplate.from_messages(
 async def lifespan(app: FastAPI):
     """起動時に alembic upgrade head でスキーマを作る。"""
     run_migrations()
+    # alembic の fileConfig が root logger を WARN にリセットするため、
+    # migration 後に LOG_LEVEL 環境変数のレベルへ戻してアプリのログが抑制されないようにする。
+    level = getattr(logging, settings.log_level.upper(), logging.INFO)
+    logging.getLogger().setLevel(level)
     yield
 
 
