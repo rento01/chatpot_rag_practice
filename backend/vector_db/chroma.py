@@ -23,6 +23,7 @@ import chromadb
 from rank_bm25 import BM25Okapi
 
 from backend.config import settings
+from backend.llm import get_embed_model
 from backend.logging_config import get_logger
 
 from .vectorDB import Chunk, SearchResult, VectorDB
@@ -86,7 +87,7 @@ class ChromaVectorDB(VectorDB):
         self,
         collection_id: int,
         query: str,
-        top_k: int = 5,
+        top_k: int = settings.search_top_k,
     ) -> list[SearchResult]:
         # コレクションが存在しない場合（ドキュメント未登録など）は空リストを返す。
         try:
@@ -94,31 +95,54 @@ class ChromaVectorDB(VectorDB):
         except Exception:
             return []
 
-        result = col.get()
-        documents: list[str] = result.get("documents") or []
-        metadatas: list[dict] = result.get("metadatas") or []
+        # ── Phase 2-2: BM25 キーワード検索（Phase 3-3 ハイブリッド検索で再利用予定）──
+        # result = col.get()
+        # documents: list[str] = result.get("documents") or []
+        # metadatas: list[dict] = result.get("metadatas") or []
+        # if not documents:
+        #     return []
+        # tokenized_corpus = [_bigram(doc) for doc in documents]
+        # scores = BM25Okapi(tokenized_corpus).get_scores(_bigram(query))
+        # ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+        # hits = [(i, s) for i, s in ranked if s > 0][:top_k]
+        # return [
+        #     SearchResult(
+        #         document_id=metadatas[i].get("document_id", 0),
+        #         text=documents[i],
+        #         score=float(score),
+        #         metadata=metadatas[i],
+        #     )
+        #     for i, score in hits
+        # ]
+        # ── ここまで Phase 2-2 BM25 ──
+
+        # Phase 3-2: クエリの embedding を生成する。失敗時は空リストを返す。
+        try:
+            query_embedding = get_embed_model().embed([query])[0]
+        except Exception:
+            logger.warning("クエリの embedding 生成に失敗しました", exc_info=True)
+            return []
+
+        # コサイン類似度（k-NN）でチャンクを検索する。
+        # nomic-embed-text は単位正規化済みのため、ChromaDB デフォルトの L2 距離と
+        # コサイン距離は等価になる。score = 1 - distance/2 で [0, 1] に変換する。
+        result = col.query(query_embeddings=[query_embedding], n_results=top_k)
+
+        documents: list[str] = result.get("documents", [[]])[0]
+        metadatas: list[dict] = result.get("metadatas", [[]])[0]
+        distances: list[float] = result.get("distances", [[]])[0]
 
         if not documents:
             return []
-
-        # 文字 bigram でトークナイズし BM25 スコアを算出する。
-        # 日本語は空白で単語が切れないため、文字単位のスライドウィンドウで対応する。
-        # Phase 2-2 では「まず動かして観察する」方針のため形態素解析は導入しない。
-        tokenized_corpus = [_bigram(doc) for doc in documents]
-        scores = BM25Okapi(tokenized_corpus).get_scores(_bigram(query))
-
-        # score > 0 のものだけを有効ヒットとして上位 top_k 件返す。
-        ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
-        hits = [(i, s) for i, s in ranked if s > 0][:top_k]
 
         return [
             SearchResult(
                 document_id=metadatas[i].get("document_id", 0),
                 text=documents[i],
-                score=float(score),
+                score=float(1.0 - distances[i] / 2.0),
                 metadata=metadatas[i],
             )
-            for i, score in hits
+            for i in range(len(documents))
         ]
 
     def delete_collection(self, collection_id: int) -> None:
