@@ -173,10 +173,11 @@ bolt-0
 
 ## 関連コミット
 
-（Commit 後に記入）
+- `b4bdcaa` feat(phase3-2): implement vector search in ChromaVectorDB
+- `924183a` docs: add phase summary check to flow and template references to skills
 
 ---
 
 ## 関連 PR
 
-（PR 作成後に記入）
+https://github.com/rento01/chatpot_rag_practice/pull/33
