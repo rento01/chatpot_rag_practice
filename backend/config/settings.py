@@ -59,6 +59,7 @@ class Settings:
 
     # 検索
     search_top_k: int
+    rrf_k: int
 
     # アップロード制限
     max_upload_mb: int
@@ -102,6 +103,7 @@ def load_settings() -> Settings:
         opensearch_endpoint=os.getenv("OPENSEARCH_ENDPOINT", ""),
         opensearch_index_prefix=os.getenv("OPENSEARCH_INDEX_PREFIX", "rag-chat"),
         search_top_k=int(os.getenv("SEARCH_TOP_K", "5")),
+        rrf_k=int(os.getenv("RRF_K", "60")),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "50")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
