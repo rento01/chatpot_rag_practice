@@ -96,7 +96,7 @@ Phase Summary 作成（Phase 最終 bolt のみ）
 | 4 | WorkLog 作成 | 作業記録の開始 | - | `worklog.md` | WorkLog | ファイル作成完了 |
 | 5 | Implementation | 実装（WorkLog 随時更新） | - | - | 実装 | 実装完了 |
 | 6 | 動作確認 | 実装確認 | - | - | 動作確認結果 | 要件を満たす |
-| 7 | Code Review | 品質確認 | `code-review` | `code_review.md` | Review 結果 | 指摘対応完了 |
+| 7 | Code Review | 品質確認 | `code-review` | `code_review.md` | Code Review ファイル（`docs/review/`） | 指摘対応完了 |
 | 8 | WorkLog 最終更新 | 作業記録の完結 | - | `worklog.md` | WorkLog（最終版） | 更新完了 |
 | 9 | TaskLog | 作業記録（最終版） | - | `tasklog.md` | TaskLog | 作成完了 |
 | 10 | Commit Message | Commit 内容整理 | - | `commit_message.md` | Commit Message | 作成完了 |
@@ -117,6 +117,7 @@ Phase Summary 作成（Phase 最終 bolt のみ）
 | Bolt Design | `docs/design/` |
 | WorkLog | `tmp/worklog/` |
 | TaskLog | `docs/taskLog/` |
+| Code Review | `docs/review/` |
 | Error Investigation | `docs/error/` |
 | Commit Message | 一時利用（保存不要） |
 | Pull Request | GitHub Pull Request |

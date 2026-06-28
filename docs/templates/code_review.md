@@ -1,5 +1,20 @@
 Code Review Template
 
+保存先
+
+docs/review/
+
+命名規則
+
+phase<phase番号>-bolt-<bolt番号>.md
+
+例
+
+* phase2-1-bolt-0.md
+* phase3-3-bolt-0.md
+
+⸻
+
 目的
 
 実装済みの差分をレビューし、
