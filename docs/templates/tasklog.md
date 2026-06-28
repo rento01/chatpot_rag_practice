@@ -169,32 +169,12 @@ UI確認	PASS
 
 Code Review 結果
 
-Summary
+**Approve / Request Changes**（High: 0 / Medium: 0 / Low: 0）
 
-* Approve
-* Request Changes
-
-High
-
-なし
-
-Medium
-
-なし
-
-Low
-
-なし
-
-⸻
-
-Review Findings の対応
-
-レビュー指摘に対する最終判断。
-
-指摘	判断	理由
-xxx	Remaining Issues	xxx
-xxx	GitHub Issue	#xx
+| ID | 内容 | 対応 |
+|---|---|---|
+| F-01 | xxx | **対応済み / Remaining Issues（RI-xx）/ 見送り**: 理由 |
+| F-02 | xxx | **対応済み / Remaining Issues（RI-xx）/ 見送り**: 理由 |
 
 ⸻
 
