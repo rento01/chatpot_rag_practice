@@ -78,6 +78,9 @@ bolt-3
 
 ## 4. bolt 設計時の出力フォーマット
 
+> **成果物を作成するときは `docs/templates/bolt-design.md` をテンプレートとして使用する。**
+> 保存先: `docs/design/phase<phase番号>-bolt-<bolt番号>.md`
+
 bolt を設計するときは、必ず以下のフォーマットで出力する。
 セクションは省略しない（不要なものは「なし」と書く）。
 

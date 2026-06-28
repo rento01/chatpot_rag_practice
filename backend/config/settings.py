@@ -57,6 +57,9 @@ class Settings:
     opensearch_endpoint: str
     opensearch_index_prefix: str
 
+    # 検索
+    search_top_k: int
+
     # アップロード制限
     max_upload_mb: int
 
@@ -98,6 +101,7 @@ def load_settings() -> Settings:
         chroma_port=int(os.getenv("CHROMA_PORT", "8001")),
         opensearch_endpoint=os.getenv("OPENSEARCH_ENDPOINT", ""),
         opensearch_index_prefix=os.getenv("OPENSEARCH_INDEX_PREFIX", "rag-chat"),
+        search_top_k=int(os.getenv("SEARCH_TOP_K", "5")),
         max_upload_mb=int(os.getenv("MAX_UPLOAD_MB", "50")),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),

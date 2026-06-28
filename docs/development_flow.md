@@ -24,6 +24,9 @@
 Issue / Phase 選択
         │
         ▼
+前 Phase サマリー確認（Phase 着手時のみ）
+        │
+        ▼
 Requirements 作成
         │
         ▼
@@ -86,6 +89,7 @@ Phase Summary 作成（Phase 最終 bolt のみ）
 
 | Step | 工程 | 目的 | 使用 Skill | 使用 Template | 成果物 | 完了条件 |
 |---|---|---|---|---|---|---|
+| 0 | 前 Phase サマリー確認 | 前 Phase の完了状態・引き継ぎ事項を把握する（Phase 着手時のみ） | - | - | - | `docs/phaseSummary/` の該当ファイルを確認済み |
 | 1 | Requirements | 要件整理 | - | `requirements.md` | Requirements | 要件が確定している |
 | 2 | Bolt Design | bolt 単位へ分割・設計 | `bolt-planning` | `bolt-design.md` | Bolt Design | ユーザー確認完了 |
 | 3 | Feature Branch | 作業ブランチ作成 | `github-workflow` | - | Feature Branch | ブランチ作成完了 |
