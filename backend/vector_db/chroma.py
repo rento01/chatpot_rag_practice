@@ -95,54 +95,77 @@ class ChromaVectorDB(VectorDB):
         except Exception:
             return []
 
-        # ── Phase 2-2: BM25 キーワード検索（Phase 3-3 ハイブリッド検索で再利用予定）──
-        # result = col.get()
-        # documents: list[str] = result.get("documents") or []
-        # metadatas: list[dict] = result.get("metadatas") or []
-        # if not documents:
-        #     return []
-        # tokenized_corpus = [_bigram(doc) for doc in documents]
-        # scores = BM25Okapi(tokenized_corpus).get_scores(_bigram(query))
-        # ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
-        # hits = [(i, s) for i, s in ranked if s > 0][:top_k]
-        # return [
-        #     SearchResult(
-        #         document_id=metadatas[i].get("document_id", 0),
-        #         text=documents[i],
-        #         score=float(score),
-        #         metadata=metadatas[i],
-        #     )
-        #     for i, score in hits
-        # ]
-        # ── ここまで Phase 2-2 BM25 ──
+        # Phase 3-3: ハイブリッド検索（BM25 + ベクトル検索 + RRF）
+        #
+        # BM25 と ベクトル検索の結果を RRF（Reciprocal Rank Fusion）で統合する。
+        # RRF スコア = Σ 1 / (rrf_k + rank)  ※ rank は 1 始まり
+        # 両リストに登場するチャンクはスコアが加算されるため上位になる。
 
-        # Phase 3-2: クエリの embedding を生成する。失敗時は空リストを返す。
+        # ── BM25 キーワード検索 ──
+        all_data = col.get()
+        all_documents: list[str] = all_data.get("documents") or []
+        all_metadatas: list[dict] = all_data.get("metadatas") or []
+
+        bm25_hits: list[tuple[int, float]] = []
+        if all_documents:
+            tokenized_corpus = [_bigram(doc) for doc in all_documents]
+            scores = BM25Okapi(tokenized_corpus).get_scores(_bigram(query))
+            ranked = sorted(enumerate(scores), key=lambda x: x[1], reverse=True)
+            bm25_hits = [(i, s) for i, s in ranked if s > 0][:top_k]
+
+        # ── ベクトル検索 ──
+        # n_results がチャンク数を超えるとエラーになるため上限を設ける（RI-05 対応）。
+        vector_hits: list[tuple[str, float]] = []
         try:
             query_embedding = get_embed_model().embed([query])[0]
+            n_results = min(top_k, col.count())
+            if n_results > 0:
+                v_result = col.query(
+                    query_embeddings=[query_embedding],
+                    n_results=n_results,
+                )
+                v_ids: list[str] = v_result.get("ids", [[]])[0]
+                v_distances: list[float] = v_result.get("distances", [[]])[0]
+                vector_hits = list(zip(v_ids, v_distances))
         except Exception:
-            logger.warning("クエリの embedding 生成に失敗しました", exc_info=True)
+            logger.warning("ベクトル検索に失敗しました。BM25 のみで返します", exc_info=True)
+
+        if not bm25_hits and not vector_hits:
             return []
 
-        # コサイン類似度（k-NN）でチャンクを検索する。
-        # nomic-embed-text は単位正規化済みのため、ChromaDB デフォルトの L2 距離と
-        # コサイン距離は等価になる。score = 1 - distance/2 で [0, 1] に変換する。
-        result = col.query(query_embeddings=[query_embedding], n_results=top_k)
+        # ── RRF 統合 ──
+        # chunk_id をキーに RRF スコアを集計する。
+        # BM25 は corpus インデックス、ベクトル検索は Chroma の document ID を使うため
+        # BM25 側は "bm25_{index}" 形式で仮 ID を発行して統一する。
+        rrf_k = settings.rrf_k
+        rrf_scores: dict[str, float] = {}
 
-        documents: list[str] = result.get("documents", [[]])[0]
-        metadatas: list[dict] = result.get("metadatas", [[]])[0]
-        distances: list[float] = result.get("distances", [[]])[0]
+        for rank, (idx, _) in enumerate(bm25_hits, start=1):
+            key = f"bm25_{idx}"
+            rrf_scores[key] = rrf_scores.get(key, 0.0) + 1.0 / (rrf_k + rank)
 
-        if not documents:
-            return []
+        # ベクトル検索の Chroma document ID を BM25 corpus インデックスに逆引きする。
+        all_ids: list[str] = all_data.get("ids") or []
+        id_to_index: dict[str, int] = {doc_id: i for i, doc_id in enumerate(all_ids)}
+
+        for rank, (chroma_id, _) in enumerate(vector_hits, start=1):
+            idx = id_to_index.get(chroma_id)
+            if idx is None:
+                continue
+            key = f"bm25_{idx}"
+            rrf_scores[key] = rrf_scores.get(key, 0.0) + 1.0 / (rrf_k + rank)
+
+        # RRF スコアで降順ソートして上位 top_k 件を SearchResult に変換する。
+        sorted_keys = sorted(rrf_scores, key=lambda k: rrf_scores[k], reverse=True)[:top_k]
 
         return [
             SearchResult(
-                document_id=metadatas[i].get("document_id", 0),
-                text=documents[i],
-                score=float(1.0 - distances[i] / 2.0),
-                metadata=metadatas[i],
+                document_id=all_metadatas[int(key.split("_")[1])].get("document_id", 0),
+                text=all_documents[int(key.split("_")[1])],
+                score=rrf_scores[key],
+                metadata=all_metadatas[int(key.split("_")[1])],
             )
-            for i in range(len(documents))
+            for key in sorted_keys
         ]
 
     def delete_collection(self, collection_id: int) -> None:
