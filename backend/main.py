@@ -45,7 +45,7 @@ from backend.config import settings
 from backend.db import SessionLocal, get_db, run_migrations
 from backend.llm import get_chat_model
 from backend.logging_config import get_logger, setup_logging
-from backend.tracing import trace
+from backend.tracing import generation, span, trace
 from backend.vector_db import get_vector_db
 
 # ──────────────────────────────────────────────
@@ -402,8 +402,7 @@ def _build_messages(req: schemas.ChatRequest) -> list[BaseMessage]:
     """LLM に渡す BaseMessage 列を組み立てる。
 
     use_rag=True かつ collection_id 指定時のみ RAG コンテキストを差し込む。
-    教材初期段階では検索は未実装なので、ヒット 0 として NO_HIT 用の system
-    プロンプトが選ばれる。
+    span("rag-search") は OTel コンテキスト経由で呼び出し元の trace に自動的に紐づく。
     """
     # フロントから来た履歴を LangChain のメッセージ型に変換する。
     # role が想定外の場合は user 扱いで吸収（フロントが将来追加した役割で
@@ -419,10 +418,16 @@ def _build_messages(req: schemas.ChatRequest) -> list[BaseMessage]:
             (m.content for m in reversed(req.messages) if m.role == "user"),
             "",
         )
-        ctx = rag.build_context(last_user, req.collection_id)
-        if ctx.has_hits:
+        with span(
+            name="rag-search",
+            input={"query": last_user, "collection_id": req.collection_id},
+        ) as s:
+            rag_ctx = rag.build_context(last_user, req.collection_id)
+            s.update(output={"has_hits": rag_ctx.has_hits})
+
+        if rag_ctx.has_hits:
             return RAG_PROMPT.format_messages(
-                context=ctx.context_text, history=history
+                context=rag_ctx.context_text, history=history
             )
         return RAG_NO_HIT_PROMPT.format_messages(history=history)
 
@@ -434,13 +439,12 @@ async def chat(req: schemas.ChatRequest, db: DB) -> StreamingResponse:
     """チャットエンドポイント。
 
     フローは
-      1. system プロンプトを組み立て (RAG 有無で分岐)
-      2. user メッセージを DB に保存
-      3. LLM ストリームを yield しつつ、終わったら assistant メッセージを保存
+      1. user メッセージを DB に保存
+      2. トレース開始・RAG 検索 span（use_rag=True 時）
+      3. LLM ストリームを yield しつつ llm-generation span を記録
+      4. 終わったら assistant メッセージを保存
     """
-    messages = _build_messages(req)
-
-    # user メッセージを履歴に追加
+    # user メッセージを履歴に追加（db セッションが必要なため trace の外で行う）
     if req.conversation_id is not None:
         conv = db.get(dm.Conversation, req.conversation_id)
         if conv is None:
@@ -468,9 +472,15 @@ async def chat(req: schemas.ChatRequest, db: DB) -> StreamingResponse:
                 "conversation_id": req.conversation_id,
             },
         ):
-            async for chunk in chat_model.stream(messages):
-                collected.append(chunk)
-                yield chunk
+            # RAG 検索を含むメッセージ構築（rag-search span は OTel コンテキストで自動的に子になる）
+            messages = _build_messages(req)
+
+            # LLM 生成 span
+            with generation(name="llm-generation", model=settings.ollama_chat_model) as gen:
+                async for chunk in chat_model.stream(messages):
+                    collected.append(chunk)
+                    yield chunk
+                gen.update(output="".join(collected))
 
         # assistant メッセージを履歴に保存
         if req.conversation_id is not None and collected:

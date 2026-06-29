@@ -3,11 +3,15 @@
 教材としてのねらい:
 - Phase 4 (Langfuse 導入) でここを埋めることで「観測」を体験する
 - 初期状態では完全に no-op なので、`LANGFUSE_*` 未設定でもアプリは動く
+
+Langfuse SDK v4 対応:
+- v3 以前の .trace() / .span() / .generation() メソッドは廃止
+- v4 は OTel ベースの start_as_current_observation() API を使う
+- 親子関係は OTel コンテキストで自動管理されるため trace_ctx の引き回し不要
 """
 
 from __future__ import annotations
 
-import os
 from contextlib import contextmanager
 from typing import Any, Generator
 
@@ -26,16 +30,23 @@ def _init() -> None:
         return
     _initialized = True
 
-    secret = os.getenv("LANGFUSE_SECRET_KEY", "")
-    public = os.getenv("LANGFUSE_PUBLIC_KEY", "")
-    if not secret or not public:
+    # settings 経由で読むことで LANGFUSE_HOST の値が確実に反映される。
+    # Langfuse() をデフォルト引数で呼ぶと SDK が独自に env を読み直すため、
+    # settings.py との変数名の差異でエンドポイントが意図しない値になる。
+    from backend.config import settings
+
+    if not settings.langfuse_secret_key or not settings.langfuse_public_key:
         # 未設定: Langfuse を使わない（教材初期段階の想定）
         return
 
     try:
         from langfuse import Langfuse
 
-        _langfuse = Langfuse()
+        _langfuse = Langfuse(
+            public_key=settings.langfuse_public_key,
+            secret_key=settings.langfuse_secret_key,
+            host=settings.langfuse_host,
+        )
     except Exception:
         # SDK が無い・初期化失敗時は黙って no-op
         _langfuse = None
@@ -47,35 +58,64 @@ def _init() -> None:
 
 
 @contextmanager
-def trace(name: str, **kwargs: Any) -> Generator[Any, None, None]:
-    """トレース context manager。Langfuse 無効時は no-op を返す。
+def trace(name: str, input: Any = None) -> Generator[None, None, None]:
+    """トップレベルのトレースを開始するコンテキストマネージャ。
 
-    Phase 4 で span/generation を追加するときは、ここで返すオブジェクトを
-    実トレース or _NoopSpan で透過的に切り替える想定。
+    Langfuse 無効時は no-op として透過的に動作する。
+    内部で span() / generation() を使うと OTel コンテキスト経由で自動的に子になる。
     """
     _init()
     if _langfuse is None:
-        yield _NoopSpan()
+        yield
         return
 
-    t = _langfuse.trace(name=name, **kwargs)
     try:
-        yield t
+        with _langfuse.start_as_current_observation(name=name, as_type="span", input=input):
+            yield
     finally:
         _langfuse.flush()
 
 
-class _NoopSpan:
-    """Langfuse 無効時のダミー。`span(...).end(...)` などを安全に呼べる。"""
+@contextmanager
+def span(name: str, input: Any = None) -> Generator[Any, None, None]:
+    """子 span を作成するコンテキストマネージャ。trace() 内で使う。
 
-    def span(self, **kwargs: Any) -> "_NoopSpan":
-        return self
+    OTel コンテキストで親 trace に自動的に紐づく。
+    Langfuse 無効時は NoopSpan を返す。
+    """
+    _init()
+    if _langfuse is None:
+        yield NoopSpan()
+        return
 
-    def generation(self, **kwargs: Any) -> "_NoopSpan":
-        return self
+    with _langfuse.start_as_current_observation(name=name, as_type="span", input=input) as s:
+        yield s
 
-    def end(self, **kwargs: Any) -> None:
-        pass
+
+@contextmanager
+def generation(name: str, model: str = "", input: Any = None) -> Generator[Any, None, None]:
+    """LLM 生成 span を作成するコンテキストマネージャ。trace() 内で使う。
+
+    OTel コンテキストで親 trace に自動的に紐づく。
+    Langfuse 無効時は NoopSpan を返す。
+    """
+    _init()
+    if _langfuse is None:
+        yield NoopSpan()
+        return
+
+    with _langfuse.start_as_current_observation(name=name, as_type="generation", model=model, input=input) as g:
+        yield g
+
+
+class NoopSpan:
+    """Langfuse 無効時のダミー。span() / generation() が yield するデフォルト値。
+
+    .update() / .end() を安全に呼べる。
+    """
 
     def update(self, **kwargs: Any) -> None:
+        pass
+
+    def end(self, **kwargs: Any) -> None:
         pass

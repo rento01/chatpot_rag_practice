@@ -25,6 +25,7 @@ from pypdf import PdfReader
 
 from backend.llm import get_embed_model
 from backend.logging_config import get_logger
+from backend.tracing import span as tracing_span
 from backend.vector_db import get_vector_db
 from backend.vector_db.vectorDB import Chunk
 
@@ -74,30 +75,46 @@ def index_document(collection_id: int, document_id: int, file_data: bytes) -> in
     戻り値はページ数。`backend.main._index_document` がそのまま
     `documents.page_count` に書き込むので、ここで 1 回 PDF をパースすれば足りる
     （main 側で重ねて extract_text を呼ばないため）。
+
+    各処理ステップは tracing_span() で記録される。
+    呼び出し元の trace("index-document") が OTel コンテキストを保持しているため、
+    ここで作る span は自動的に index-document の子になる。
     """
-    text, page_count = extract_text(file_data)
-    chunks = split_into_chunks(text)
+    # テキスト抽出
+    with tracing_span(name="extract", input={"file_size": len(file_data)}) as s_extract:
+        text, page_count = extract_text(file_data)
+        s_extract.update(output={"page_count": page_count})
+
+    # チャンク分割
+    with tracing_span(name="split", input={"text_length": len(text)}) as s_split:
+        chunks = split_into_chunks(text)
+        s_split.update(output={"chunk_count": len(chunks)})
 
     # スキャン PDF など、テキストが抽出できなかった場合は upsert をスキップする。
     if chunks:
         # embedding 生成。失敗時は warning ログを出して embedding=None のままフォールバックし、
         # upsert 自体は継続する（BM25 キーワード検索は embedding なしでも動作するため）。
         logger.info("embedding 生成を開始: %d チャンク", len(chunks))
-        try:
-            embeddings: list[list[float] | None] = get_embed_model().embed(chunks)
-            logger.info("embedding 生成を完了: %d チャンク", len(chunks))
-        except Exception:
-            logger.warning(
-                "embedding 生成に失敗しました。embedding なしで upsert を継続します",
-                exc_info=True,
-            )
-            embeddings = [None] * len(chunks)
+        with tracing_span(name="embed", input={"chunk_count": len(chunks)}) as s_embed:
+            try:
+                embeddings: list[list[float] | None] = get_embed_model().embed(chunks)
+                logger.info("embedding 生成を完了: %d チャンク", len(chunks))
+                s_embed.update(output={"status": "ok"})
+            except Exception:
+                logger.warning(
+                    "embedding 生成に失敗しました。embedding なしで upsert を継続します",
+                    exc_info=True,
+                )
+                s_embed.update(output={"status": "failed"})
+                embeddings = [None] * len(chunks)
 
-        vdb = get_vector_db()
-        vdb.upsert(
-            collection_id,
-            [Chunk(document_id=document_id, text=c, embedding=e) for c, e in zip(chunks, embeddings)],
-        )
+        with tracing_span(name="upsert", input={"chunk_count": len(chunks)}) as s_upsert:
+            vdb = get_vector_db()
+            vdb.upsert(
+                collection_id,
+                [Chunk(document_id=document_id, text=c, embedding=e) for c, e in zip(chunks, embeddings)],
+            )
+            s_upsert.update(output={"chunk_count": len(chunks)})
 
     return page_count
 
