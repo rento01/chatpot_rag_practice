@@ -196,6 +196,9 @@ Claude Code は本ドキュメントを開発フローとして参照する。
 
 各工程では対応する Skill を使用する。
 
+**各工程を開始する前に、§3 テーブルの「使用 Template」列を確認し、テンプレートに従って成果物を作成すること。**
+テンプレートが指定されている工程では、テンプレートを読まずに成果物を作り始めてはならない。
+
 各工程終了後は以下をユーザーへ報告する。
 
 * 完了した工程
@@ -206,7 +209,27 @@ Claude Code は本ドキュメントを開発フローとして参照する。
 
 ⸻
 
-## 7. ドキュメントの責務
+## 7. テンプレート対応表
+
+各工程を開始する前に、対応するテンプレートを `docs/templates/` から読み込んでから成果物を作成すること。
+
+| 工程 | テンプレートファイル |
+|---|---|
+| Requirements 作成 | `docs/templates/requirements.md` |
+| Bolt Design | `docs/templates/bolt-design.md` |
+| WorkLog 作成 | `docs/templates/worklog.md` |
+| Implementation | `docs/templates/bolt_implementation.md` |
+| Code Review | `docs/templates/code_review.md` |
+| TaskLog 作成 | `docs/templates/tasklog.md` |
+| Commit Message 作成 | `docs/templates/commit_message.md` |
+| PR 本文作成 | `docs/templates/pr_template.md` |
+| Pull Request 作成 | `docs/templates/pr_create.md` |
+| Phase Summary 作成 | `docs/templates/summary.md` |
+| Error Investigation（発生時） | `docs/templates/error-investigation.md` |
+
+⸻
+
+## 9. ドキュメントの責務
 
 | ドキュメント | 役割 |
 |---|---|
@@ -218,7 +241,7 @@ Claude Code は本ドキュメントを開発フローとして参照する。
 
 ⸻
 
-## 8. 更新ルール
+## 10. 更新ルール
 
 以下の場合は本ドキュメントを更新する。
 
